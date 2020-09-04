@@ -26,13 +26,7 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  AlfrescoApiService,
-  NodeFavoriteDirective,
-  DataTableComponent,
-  AppConfigPipe,
-  UserPreferencesService
-} from '@alfresco/adf-core';
+import { AlfrescoApiService, NodeFavoriteDirective, DataTableComponent, AppConfigPipe, UserPreferencesService } from '@alfresco/adf-core';
 import { DocumentListComponent } from '@alfresco/adf-content-services';
 import { FavoriteLibrariesComponent } from './favorite-libraries.component';
 import { AppTestingModule } from '../../testing/app-testing.module';
@@ -65,17 +59,8 @@ describe('FavoriteLibrariesComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        AppTestingModule,
-        EffectsModule.forRoot([RouterEffects, LibraryEffects])
-      ],
-      declarations: [
-        DataTableComponent,
-        NodeFavoriteDirective,
-        DocumentListComponent,
-        FavoriteLibrariesComponent,
-        AppConfigPipe
-      ],
+      imports: [AppTestingModule, EffectsModule.forRoot([RouterEffects, LibraryEffects])],
+      declarations: [DataTableComponent, NodeFavoriteDirective, DocumentListComponent, FavoriteLibrariesComponent, AppConfigPipe],
       providers: [ContentManagementService, UserPreferencesService],
       schemas: [NO_ERRORS_SCHEMA]
     });
@@ -83,23 +68,19 @@ describe('FavoriteLibrariesComponent', () => {
     fixture = TestBed.createComponent(FavoriteLibrariesComponent);
     component = fixture.componentInstance;
 
-    alfrescoApi = TestBed.get(AlfrescoApiService);
-    contentApiService = TestBed.get(ContentApiService);
-    userPreference = TestBed.get(UserPreferencesService);
-    contentManagementService = TestBed.get(ContentManagementService);
+    alfrescoApi = TestBed.inject(AlfrescoApiService);
+    contentApiService = TestBed.inject(ContentApiService);
+    userPreference = TestBed.inject(UserPreferencesService);
+    contentManagementService = TestBed.inject(ContentManagementService);
     alfrescoApi.reset();
-    router = TestBed.get(Router);
+    router = TestBed.inject(Router);
 
-    spyOn(contentApiService, 'getNode').and.returnValue(
-      of({ entry: { id: 'libraryId' } } as NodeEntry)
-    );
+    spyOn(contentApiService, 'getNode').and.returnValue(of({ entry: { id: 'libraryId' } } as NodeEntry));
   });
 
   describe('on initialization', () => {
     it('should set data', () => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
       fixture.detectChanges();
 
       expect(component.list).toBe(page);
@@ -108,22 +89,17 @@ describe('FavoriteLibrariesComponent', () => {
 
     it('should get data with user preference pagination size', () => {
       userPreference.paginationSize = 1;
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
 
       fixture.detectChanges();
 
-      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith(
-        '-me-',
-        { maxItems: userPreference.paginationSize }
-      );
+      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith('-me-', {
+        maxItems: userPreference.paginationSize
+      });
     });
 
     it('should set data on error', () => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        throwError('error')
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(throwError('error'));
       fixture.detectChanges();
 
       expect(component.list).toBe(null);
@@ -144,15 +120,13 @@ describe('FavoriteLibrariesComponent', () => {
       spyOn(router, 'navigate').and.stub();
       component.navigateTo({ entry: { guid: 'guid' } } as any);
 
-      expect(router.navigate).toHaveBeenCalledWith(['libraries', 'libraryId']);
+      expect(router.navigate).toHaveBeenCalledWith(['favorite/libraries', 'libraryId']);
     });
   });
 
   describe('Reload on actions', () => {
     beforeEach(() => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
       fixture.detectChanges();
     });
 
@@ -196,35 +170,23 @@ describe('FavoriteLibrariesComponent', () => {
     });
 
     it('should get list with pagination data onChange event', () => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
 
       component.onChange(pagination);
 
-      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith(
-        '-me-',
-        pagination
-      );
+      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith('-me-', pagination);
     });
 
     it('should get list with pagination data onChangePageSize event', () => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
 
       component.onChangePageSize(pagination);
 
-      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith(
-        '-me-',
-        pagination
-      );
+      expect(contentApiService.getFavoriteLibraries).toHaveBeenCalledWith('-me-', pagination);
     });
 
     it('should set preference page size onChangePageSize event', () => {
-      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(
-        of(page)
-      );
+      spyOn(contentApiService, 'getFavoriteLibraries').and.returnValue(of(page));
 
       component.onChangePageSize(pagination);
 

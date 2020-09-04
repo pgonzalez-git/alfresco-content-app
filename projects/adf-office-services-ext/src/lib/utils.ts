@@ -31,6 +31,7 @@ export const supportedExtensions = {
   dot: 'ms-word',
   dotx: 'ms-word',
   dotm: 'ms-word',
+  rtf: 'ms-word',
   xls: 'ms-excel',
   xlsx: 'ms-excel',
   xlsb: 'ms-excel',
@@ -38,6 +39,7 @@ export const supportedExtensions = {
   xlt: 'ms-excel',
   xltx: 'ms-excel',
   xltm: 'ms-excel',
+  xlam: 'ms-excel',
   ppt: 'ms-powerpoint',
   pptx: 'ms-powerpoint',
   pot: 'ms-powerpoint',
@@ -49,7 +51,16 @@ export const supportedExtensions = {
   ppam: 'ms-powerpoint',
   ppsm: 'ms-powerpoint',
   sldx: 'ms-powerpoint',
-  sldm: 'ms-powerpoint'
+  sldm: 'ms-powerpoint',
+  vsd: 'ms-visio',
+  vss: 'ms-visio',
+  vst: 'ms-visio',
+  vsdx: 'ms-visio',
+  vsdm: 'ms-visio',
+  vssx: 'ms-visio',
+  vssm: 'ms-visio',
+  vstx: 'ms-visio',
+  vstm: 'ms-visio'
 };
 /* cspell:enable */
 

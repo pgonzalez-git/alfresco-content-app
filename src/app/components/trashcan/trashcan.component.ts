@@ -29,9 +29,9 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { ContentManagementService } from '../../services/content-management.service';
 import { PageComponent } from '../page.component';
+import { AppExtensionService } from '@alfresco/aca-shared';
 
 @Component({
   templateUrl: './trashcan.component.html'
@@ -56,11 +56,9 @@ export class TrashcanComponent extends PageComponent implements OnInit {
     super.ngOnInit();
 
     this.subscriptions.push(
-      this.breakpointObserver
-        .observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape])
-        .subscribe(result => {
-          this.isSmallScreen = result.matches;
-        })
+      this.breakpointObserver.observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape]).subscribe((result) => {
+        this.isSmallScreen = result.matches;
+      })
     );
 
     this.columns = this.extensions.documentListPresets.trashcan || [];

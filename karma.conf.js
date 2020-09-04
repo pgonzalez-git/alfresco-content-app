@@ -1,6 +1,6 @@
 // Karma configuration file, see link for more information
 // https://karma-runner.github.io/1.0/config/configuration-file.html
-process.env.CHROME_BIN = require('puppeteer').executablePath();
+// process.env.CHROME_BIN = require('puppeteer').executablePath();
 
 module.exports = function(config) {
   config.set({
@@ -11,10 +11,10 @@ module.exports = function(config) {
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
       require('karma-coverage-istanbul-reporter'),
+      require('karma-mocha-reporter'),
       require('@angular-devkit/build-angular/plugins/karma')
     ],
     files: [
-      { pattern: './node_modules/hammerjs/hammer.js', watched: false },
       {
         pattern:
           './node_modules/@angular/material/prebuilt-themes/indigo-pink.css',
@@ -36,9 +36,13 @@ module.exports = function(config) {
       }
     ],
     proxies: {
+      '/assets/adf-core/i18n/en-GB.json':
+        '/base/node_modules/@alfresco/adf-core/bundles/assets/adf-core/i18n/en.json',
       '/assets/adf-core/i18n/en.json':
         '/base/node_modules/@alfresco/adf-core/bundles/assets/adf-core/i18n/en.json',
       '/assets/adf-content-services/i18n/en.json':
+        '/base/node_modules/@alfresco/adf-content-services/bundles/assets/adf-content-services/i18n/en.json',
+      '/assets/adf-content-services/i18n/en-GB.json':
         '/base/node_modules/@alfresco/adf-content-services/bundles/assets/adf-content-services/i18n/en.json'
     },
     client: {
@@ -50,7 +54,7 @@ module.exports = function(config) {
       fixWebpackSourcePaths: true
     },
 
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['mocha', 'kjhtml'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
@@ -61,7 +65,7 @@ module.exports = function(config) {
         base: 'Chrome',
         flags: [
           '--no-sandbox',
-          '--headless',
+          // '--headless',
           '--disable-gpu',
           '--remote-debugging-port=9222'
         ]

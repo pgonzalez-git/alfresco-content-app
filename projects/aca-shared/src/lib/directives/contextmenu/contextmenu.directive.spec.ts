@@ -38,17 +38,17 @@ describe('ContextActionsDirective', () => {
     directive = new ContextActionsDirective(storeMock);
   });
 
-  it('should not render context menu when `enabled` property is false', () => {
+  it('should not render context menu when `enabled` property is false', fakeAsync(() => {
+    spyOn(directive, 'execute').and.stub();
     directive.enabled = false;
     directive.onContextMenuEvent(new MouseEvent('contextmenu'));
 
-    expect(storeMock.dispatch).not.toHaveBeenCalled();
-  });
+    expect(directive.execute).not.toHaveBeenCalled();
+  }));
 
   it('should call service to render context menu', fakeAsync(() => {
     const el = document.createElement('div');
-    el.className =
-      'adf-datatable-cell adf-datatable-cell--text adf-datatable-row';
+    el.className = 'adf-datatable-cell adf-datatable-cell--text adf-datatable-row';
 
     const fragment = document.createDocumentFragment();
     fragment.appendChild(el);
@@ -61,8 +61,6 @@ describe('ContextActionsDirective', () => {
 
     tick(500);
 
-    expect(storeMock.dispatch).toHaveBeenCalledWith(
-      new ContextMenu(mouseEventMock)
-    );
+    expect(storeMock.dispatch).toHaveBeenCalledWith(new ContextMenu(mouseEventMock));
   }));
 });

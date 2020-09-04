@@ -23,15 +23,15 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BrowsingPage } from '../../pages/pages';
-import { Viewer } from '../../components/viewer/viewer';
-import { Utils } from '../../utilities/utils';
+import { BrowsingPage, Viewer, Utils, Menu } from '@alfresco/aca-testing-shared';
+import { BrowserActions } from '@alfresco/adf-testing';
 
 const page = new BrowsingPage();
 const { dataTable, toolbar } = page;
 const contextMenu = dataTable.menu;
 const viewer = new Viewer();
 const viewerToolbar = viewer.toolbar;
+const menu = new Menu();
 
 export async function checkContextMenu(item: string, expectedContextMenu: string[]): Promise<void> {
   await dataTable.rightClickOnItem(item);
@@ -40,6 +40,7 @@ export async function checkContextMenu(item: string, expectedContextMenu: string
   expect(actualActions).toEqual(expectedContextMenu);
 
   await Utils.pressEscape();
+  await menu.waitForMenuToClose();
 }
 
 export async function checkToolbarPrimary(item: string, expectedToolbarPrimary: string[]): Promise<void> {
@@ -81,6 +82,7 @@ export async function checkMultipleSelContextMenu(items: string[], expectedConte
   expect(actualActions).toEqual(expectedContextMenu);
 
   await Utils.pressEscape();
+  await menu.waitForMenuToClose();
 }
 
 export async function checkMultipleSelToolbarPrimary(items: string[], expectedToolbarPrimary: string[]): Promise<void> {
@@ -90,7 +92,11 @@ export async function checkMultipleSelToolbarPrimary(items: string[], expectedTo
   expect(actualPrimaryActions).toEqual(expectedToolbarPrimary);
 }
 
-export async function checkMultipleSelToolbarActions(items: string[], expectedToolbarPrimary: string[], expectedToolbarMore: string[]): Promise<void> {
+export async function checkMultipleSelToolbarActions(
+  items: string[],
+  expectedToolbarPrimary: string[],
+  expectedToolbarMore: string[]
+): Promise<void> {
   await dataTable.selectMultipleItems(items);
 
   const actualPrimaryActions = await toolbar.getButtons();
@@ -106,7 +112,7 @@ export async function checkMultipleSelToolbarActions(items: string[], expectedTo
 
 export async function checkViewerActions(item: string, expectedToolbarPrimary: string[], expectedToolbarMore: string[]): Promise<void> {
   await dataTable.selectItem(item);
-  await toolbar.viewButton.click();
+  await BrowserActions.click(toolbar.viewButton);
   await viewer.waitForViewerToOpen();
 
   let actualPrimaryActions = await viewerToolbar.getButtons();
@@ -118,8 +124,8 @@ export async function checkViewerActions(item: string, expectedToolbarPrimary: s
   const actualMoreActions = await viewerToolbar.menu.getMenuItems();
   expect(actualMoreActions).toEqual(expectedToolbarMore);
 
-  await toolbar.closeMoreMenu();
   await Utils.pressEscape();
+  await menu.waitForMenuToClose();
 }
 
 const toRemove = ['Close', 'Previous File', 'Next File', 'View details'];

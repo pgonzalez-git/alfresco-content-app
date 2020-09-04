@@ -32,13 +32,7 @@ import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-test-component',
-  template: `
-    <span
-      id="test-element"
-      acaActiveLink="active-link-class"
-      [action]="item"
-    ></span>
-  `
+  template: ` <span id="test-element" acaActiveLink="active-link-class" [action]="item"></span> `
 })
 class TestComponent {
   item = {
@@ -74,36 +68,24 @@ describe('ActionDirective', () => {
     });
 
     fixture = TestBed.createComponent(TestComponent);
-    router = TestBed.get(Router);
+    router = TestBed.inject(Router);
   });
 
   it('should add active route class name', () => {
     fixture.detectChanges();
     router.navigateByUrl('/dummy');
     // fixture.detectChanges();
-    expect(
-      document.body
-        .querySelector('#test-element')
-        .className.includes('active-link-class')
-    ).toBe(true);
+    expect(document.body.querySelector('#test-element').className.includes('active-link-class')).toBe(true);
   });
 
   it('should remove class name if route not active', () => {
     fixture.detectChanges();
     router.navigateByUrl('/dummy');
 
-    expect(
-      document.body
-        .querySelector('#test-element')
-        .className.includes('active-link-class')
-    ).toBe(true);
+    expect(document.body.querySelector('#test-element').className.includes('active-link-class')).toBe(true);
 
     router.navigateByUrl('/other');
 
-    expect(
-      document.body
-        .querySelector('#test-element')
-        .className.includes('active-link-class')
-    ).not.toBe(true);
+    expect(document.body.querySelector('#test-element').className.includes('active-link-class')).not.toBe(true);
   });
 });

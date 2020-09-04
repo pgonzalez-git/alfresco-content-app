@@ -23,17 +23,14 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  DocumentListComponent,
-  ShareDataRow
-} from '@alfresco/adf-content-services';
+import { DocumentListComponent, ShareDataRow } from '@alfresco/adf-content-services';
+import { ShowHeaderMode } from '@alfresco/adf-core';
 import { ContentActionRef, SelectionState } from '@alfresco/adf-extensions';
-import { OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { OnDestroy, OnInit, OnChanges, ViewChild, SimpleChanges, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { MinimalNodeEntity, MinimalNodeEntryEntity } from '@alfresco/js-api';
+import { MinimalNodeEntity, MinimalNodeEntryEntity, NodePaging } from '@alfresco/js-api';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil, map } from 'rxjs/operators';
-import { AppExtensionService } from '../extensions/extension.service';
 import { ContentManagementService } from '../services/content-management.service';
 import {
   AppStore,
@@ -47,9 +44,11 @@ import {
   ViewNodeExtras,
   SetSelectedNodesAction
 } from '@alfresco/aca-shared/store';
-import { isLocked, isLibrary } from '@alfresco/aca-shared';
+import { isLocked, isLibrary, AppExtensionService } from '@alfresco/aca-shared';
 
-export abstract class PageComponent implements OnInit, OnDestroy {
+/* tslint:disable:directive-class-suffix */
+@Directive()
+export abstract class PageComponent implements OnInit, OnDestroy, OnChanges {
   onDestroy$: Subject<boolean> = new Subject<boolean>();
 
   @ViewChild(DocumentListComponent)
@@ -65,19 +64,18 @@ export abstract class PageComponent implements OnInit, OnDestroy {
   viewerToolbarActions: Array<ContentActionRef> = [];
   canUpdateNode = false;
   canUpload = false;
+  nodeResult: NodePaging;
+  showHeader = ShowHeaderMode.Always;
+  filterSorting = 'name-asc';
 
   protected subscriptions: Subscription[] = [];
 
-  constructor(
-    protected store: Store<AppStore>,
-    protected extensions: AppExtensionService,
-    protected content: ContentManagementService
-  ) {}
+  constructor(protected store: Store<AppStore>, protected extensions: AppExtensionService, protected content: ContentManagementService) {}
 
   ngOnInit() {
     this.sharedPreviewUrl$ = this.store.select(getSharedUrl);
     this.infoDrawerOpened$ = this.store.select(isInfoDrawerOpened).pipe(
-      map(infoDrawerState => {
+      map((infoDrawerState) => {
         return !this.isOutletPreviewUrl() && infoDrawerState;
       })
     );
@@ -87,25 +85,29 @@ export abstract class PageComponent implements OnInit, OnDestroy {
     this.store
       .select(getAppSelection)
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(selection => {
+      .subscribe((selection) => {
         this.selection = selection;
         this.actions = this.extensions.getAllowedToolbarActions();
         this.viewerToolbarActions = this.extensions.getViewerToolbarActions();
-        this.canUpdateNode =
-          this.selection.count === 1 &&
-          this.content.canUpdateNode(selection.first);
+        this.canUpdateNode = this.selection.count === 1 && this.content.canUpdateNode(selection.first);
       });
 
     this.store
       .select(getCurrentFolder)
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(node => {
+      .subscribe((node) => {
         this.canUpload = node && this.content.canUploadContent(node);
       });
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.nodeResult && changes.nodeResult.currentValue) {
+      this.nodeResult = changes.nodeResult.currentValue;
+    }
+  }
+
   ngOnDestroy() {
-    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions = [];
 
     this.onDestroy$.next(true);
@@ -114,8 +116,7 @@ export abstract class PageComponent implements OnInit, OnDestroy {
 
   showPreview(node: MinimalNodeEntity, extras?: ViewNodeExtras) {
     if (node && node.entry) {
-      const id =
-        (node as any).entry.nodeId || (node as any).entry.guid || node.entry.id;
+      const id = (node as any).entry.nodeId || (node as any).entry.guid || node.entry.id;
 
       this.store.dispatch(new ViewNodeAction(id, extras));
     }
@@ -158,5 +159,20 @@ export abstract class PageComponent implements OnInit, OnDestroy {
 
   private isOutletPreviewUrl(): boolean {
     return location.href.includes('viewer:view');
+  }
+
+  onFilterUpdate(newNodePaging: NodePaging) {
+    this.nodeResult = newNodePaging;
+  }
+
+  onSortingChanged(event) {
+    this.filterSorting = event.detail.key + '-' + event.detail.direction;
+  }
+
+  onAllFilterCleared() {
+    if (!this.isOutletPreviewUrl()) {
+      this.documentList.node = null;
+      this.store.dispatch(new ReloadDocumentListAction());
+    }
   }
 }

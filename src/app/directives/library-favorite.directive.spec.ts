@@ -25,13 +25,9 @@
 
 import { Component, ViewChild } from '@angular/core';
 import { LibraryFavoriteDirective } from './library-favorite.directive';
-import {
-  AlfrescoApiService,
-  AlfrescoApiServiceMock,
-  setupTestBed,
-  CoreModule
-} from '@alfresco/adf-core';
+import { AlfrescoApiService, AlfrescoApiServiceMock, setupTestBed, CoreModule } from '@alfresco/adf-core';
 import { TestBed, async } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-test-component',
@@ -55,7 +51,7 @@ describe('LibraryFavoriteDirective', () => {
   let selection;
 
   setupTestBed({
-    imports: [CoreModule.forRoot()],
+    imports: [TranslateModule.forRoot(), CoreModule.forRoot()],
     declarations: [TestComponent, LibraryFavoriteDirective],
     providers: [
       {
@@ -68,7 +64,7 @@ describe('LibraryFavoriteDirective', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(TestComponent);
     component = fixture.componentInstance;
-    api = TestBed.get(AlfrescoApiService);
+    api = TestBed.inject(AlfrescoApiService);
     selection = { entry: { guid: 'guid', id: 'id' } };
   });
 
@@ -110,9 +106,7 @@ describe('LibraryFavoriteDirective', () => {
     expect(component.directive.isFavorite()).toBeFalsy();
 
     fixture.whenStable().then(() => {
-      fixture.nativeElement
-        .querySelector('button')
-        .dispatchEvent(new MouseEvent('click'));
+      fixture.nativeElement.querySelector('button').dispatchEvent(new MouseEvent('click'));
 
       fixture.detectChanges();
 
@@ -122,18 +116,14 @@ describe('LibraryFavoriteDirective', () => {
 
   it('should call removeFavoriteSite() on click event when selection is not a favorite', async(() => {
     spyOn(api.peopleApi, 'getFavoriteSite').and.returnValue(Promise.resolve());
-    spyOn(api.favoritesApi, 'removeFavoriteSite').and.returnValue(
-      Promise.resolve()
-    );
+    spyOn(api.favoritesApi, 'removeFavoriteSite').and.returnValue(Promise.resolve());
     component.selection = selection;
     fixture.detectChanges();
 
     expect(component.directive.isFavorite()).toBeFalsy();
 
     fixture.whenStable().then(() => {
-      fixture.nativeElement
-        .querySelector('button')
-        .dispatchEvent(new MouseEvent('click'));
+      fixture.nativeElement.querySelector('button').dispatchEvent(new MouseEvent('click'));
 
       fixture.detectChanges();
 

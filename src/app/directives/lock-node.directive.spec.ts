@@ -25,19 +25,13 @@
 
 import { Component, ViewChild } from '@angular/core';
 import { LockNodeDirective } from './lock-node.directive';
-import {
-  AlfrescoApiService,
-  AlfrescoApiServiceMock,
-  setupTestBed,
-  CoreModule
-} from '@alfresco/adf-core';
+import { AlfrescoApiService, AlfrescoApiServiceMock, setupTestBed, CoreModule } from '@alfresco/adf-core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-test-component',
-  template: `
-    <button #lock="lockNode" [acaLockNode]="selection">Lock</button>
-  `
+  template: ` <button #lock="lockNode" [acaLockNode]="selection">Lock</button> `
 })
 class TestComponent {
   @ViewChild('lock')
@@ -52,7 +46,7 @@ describe('LockNodeDirective', () => {
   let component;
 
   setupTestBed({
-    imports: [CoreModule.forRoot()],
+    imports: [TranslateModule.forRoot(), CoreModule.forRoot()],
     declarations: [TestComponent, LockNodeDirective],
     providers: [
       {
@@ -66,7 +60,7 @@ describe('LockNodeDirective', () => {
     fixture = TestBed.createComponent(TestComponent);
     component = fixture.componentInstance;
     component.selection = null;
-    api = TestBed.get(AlfrescoApiService);
+    api = TestBed.inject(AlfrescoApiService);
   });
 
   it('should return false if selection is null', () => {
@@ -114,9 +108,7 @@ describe('LockNodeDirective', () => {
     tick();
     fixture.detectChanges();
 
-    expect(component.selection.entry.properties['cm:lockType']).toBe(
-      'WRITE_LOCK'
-    );
+    expect(component.selection.entry.properties['cm:lockType']).toBe('WRITE_LOCK');
   }));
 
   it('should unlock selection', fakeAsync(() => {

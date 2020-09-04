@@ -23,10 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { Utils } from '../../utilities/utils';
-import { AdminActions } from '../../utilities/admin-actions';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
+import { LoginPage, BrowsingPage, Utils, AdminActions, RepoClient } from '@alfresco/aca-testing-shared';
 
 describe('Pagination on multiple pages', () => {
   const random = Utils.random();
@@ -53,7 +50,7 @@ describe('Pagination on multiple pages', () => {
 
   afterAll(async () => {
     await userApi.sites.deleteSites(sites);
-  })
+  });
 
   describe('on My Libraries', () => {
     beforeAll(async () => {
@@ -252,5 +249,4 @@ describe('Pagination on multiple pages', () => {
       expect(await pagination.isNextEnabled()).toBe(false, 'Next button is enabled on last page');
     });
   });
-
 });

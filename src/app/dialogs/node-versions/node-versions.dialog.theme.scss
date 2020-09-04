@@ -2,8 +2,12 @@
   $foreground: map-get($theme, foreground);
   $accent: map-get($theme, accent);
 
-  .adf-version-manager-dialog-panel {
+  .adf-version-manager-dialog-panel-list {
     height: 400px;
+  }
+
+  .adf-version-manager-dialog-panel-upload {
+    height: 500px;
   }
 
   .aca-node-versions-dialog {
@@ -52,13 +56,10 @@
       }
     }
 
-    .adf-new-version-container {
-      height: 350px !important;
-    }
-
     .mat-dialog-content {
-      max-height: 36vh;
+      max-height: 100vh;
       overflow: hidden;
+      padding: 2px 26px;
     }
 
     .mat-list-item-content {
@@ -68,7 +69,7 @@
 
     .adf-version-list-container {
       .adf-version-list {
-        height: 180px;
+        height: 250px;
         overflow: hidden;
         padding: 0;
       }

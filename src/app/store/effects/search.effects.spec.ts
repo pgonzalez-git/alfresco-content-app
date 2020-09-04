@@ -29,10 +29,7 @@ import { SearchEffects } from './search.effects';
 import { EffectsModule } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { Router } from '@angular/router';
-import {
-  SearchOptionIds,
-  SearchByTermAction
-} from '@alfresco/aca-shared/store';
+import { SearchOptionIds, SearchByTermAction } from '@alfresco/aca-shared/store';
 
 describe('SearchEffects', () => {
   let store: Store<any>;
@@ -43,8 +40,8 @@ describe('SearchEffects', () => {
       imports: [AppTestingModule, EffectsModule.forRoot([SearchEffects])]
     });
 
-    store = TestBed.get(Store);
-    router = TestBed.get(Router);
+    store = TestBed.inject(Store);
+    router = TestBed.inject(Router);
 
     spyOn(router, 'navigateByUrl').and.stub();
   });
@@ -70,9 +67,7 @@ describe('SearchEffects', () => {
 
       tick();
 
-      expect(router.navigateByUrl).toHaveBeenCalledWith(
-        '/search-libraries;q=test'
-      );
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/search-libraries;q=test');
     }));
 
     it('should encode search string for parentheses', fakeAsync(() => {
@@ -80,9 +75,7 @@ describe('SearchEffects', () => {
 
       tick();
 
-      expect(router.navigateByUrl).toHaveBeenCalledWith(
-        '/search;q=%2528test%2529'
-      );
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/search;q=%2528test%2529');
     }));
   });
 });

@@ -25,7 +25,7 @@
 
 import { Effect, Actions, ofType } from '@ngrx/effects';
 import { Injectable } from '@angular/core';
-import { map, take } from 'rxjs/operators';
+import { map, take, tap } from 'rxjs/operators';
 import {
   AppStore,
   ViewerActionTypes,
@@ -33,28 +33,21 @@ import {
   ViewNodeAction,
   getCurrentFolder,
   getAppSelection,
-  FullscreenViewerAction
+  FullscreenViewerAction,
+  ViewNodeVersionAction,
+  PluginPreviewAction
 } from '@alfresco/aca-shared/store';
-import {
-  Router,
-  UrlTree,
-  UrlSegmentGroup,
-  PRIMARY_OUTLET,
-  UrlSegment
-} from '@angular/router';
+import { Router, UrlTree, UrlSegmentGroup, PRIMARY_OUTLET, UrlSegment } from '@angular/router';
 import { Store, createSelector } from '@ngrx/store';
-import { AppExtensionService } from '../../extensions/extension.service';
+import { AppExtensionService } from '@alfresco/aca-shared';
+import { MatDialog } from '@angular/material/dialog';
 
-export const fileToPreview = createSelector(
-  getAppSelection,
-  getCurrentFolder,
-  (selection, folder) => {
-    return {
-      selection,
-      folder
-    };
-  }
-);
+export const fileToPreview = createSelector(getAppSelection, getCurrentFolder, (selection, folder) => {
+  return {
+    selection,
+    folder
+  };
+});
 
 @Injectable()
 export class ViewerEffects {
@@ -62,7 +55,8 @@ export class ViewerEffects {
     private store: Store<AppStore>,
     private actions$: Actions,
     private router: Router,
-    private extensions: AppExtensionService
+    private extensions: AppExtensionService,
+    private dialog: MatDialog
   ) {}
 
   @Effect({ dispatch: false })
@@ -76,34 +70,25 @@ export class ViewerEffects {
   @Effect({ dispatch: false })
   viewNode$ = this.actions$.pipe(
     ofType<ViewNodeAction>(ViewerActionTypes.ViewNode),
-    map(action => {
+    map((action) => {
       if (action.viewNodeExtras) {
         const { location, path } = action.viewNodeExtras;
 
         if (location) {
           const navigation = this.getNavigationCommands(location);
 
-          this.router.navigate(
-            [...navigation, { outlets: { viewer: ['view', action.nodeId] } }],
-            {
-              queryParams: { location }
-            }
-          );
+          this.router.navigate([...navigation, { outlets: { viewer: ['view', action.nodeId] } }], {
+            queryParams: { location }
+          });
         }
 
         if (path) {
-          this.router.navigate(
-            ['view', { outlets: { viewer: [action.nodeId] } }],
-            {
-              queryParams: { path }
-            }
-          );
+          this.router.navigate(['view', { outlets: { viewer: [action.nodeId] } }], {
+            queryParams: { path }
+          });
         }
       } else {
-        this.router.navigate([
-          'view',
-          { outlets: { viewer: [action.nodeId] } }
-        ]);
+        this.router.navigate(['view', { outlets: { viewer: [action.nodeId] } }]);
       }
     })
   );
@@ -111,34 +96,68 @@ export class ViewerEffects {
   @Effect({ dispatch: false })
   viewFile$ = this.actions$.pipe(
     ofType<ViewFileAction>(ViewerActionTypes.ViewFile),
-    map(action => {
+    map((action) => {
       if (action.payload && action.payload.entry) {
         const { id, nodeId, isFile } = action.payload.entry as any;
 
-        if (
-          this.extensions.canPreviewNode(action.payload) &&
-          (isFile || nodeId)
-        ) {
+        if (this.extensions.canPreviewNode(action.payload) && (isFile || nodeId)) {
           this.displayPreview(nodeId || id, action.parentId);
         }
       } else {
         this.store
           .select(fileToPreview)
           .pipe(take(1))
-          .subscribe(result => {
+          .subscribe((result) => {
             if (result.selection && result.selection.file) {
               const { id, nodeId, isFile } = result.selection.file.entry as any;
 
-              if (
-                this.extensions.canPreviewNode(action.payload) &&
-                (isFile || nodeId)
-              ) {
+              if (this.extensions.canPreviewNode(action.payload) && (isFile || nodeId)) {
                 const parentId = result.folder ? result.folder.id : null;
                 this.displayPreview(nodeId || id, parentId);
               }
             }
           });
       }
+    })
+  );
+
+  @Effect({ dispatch: false })
+  viewNodeVersion$ = this.actions$.pipe(
+    ofType<ViewNodeVersionAction>(ViewerActionTypes.ViewNodeVersion),
+    map((action) => {
+      this.dialog.closeAll();
+      if (action.viewNodeExtras) {
+        const { location, path } = action.viewNodeExtras;
+        if (location) {
+          const navigation = this.getNavigationCommands(location);
+          this.router.navigate([...navigation, { outlets: { viewer: ['view', action.nodeId, action.versionId] } }], {
+            queryParams: { location }
+          });
+        }
+
+        if (path) {
+          this.router.navigate(['view', { outlets: { viewer: [action.nodeId, action.versionId] } }], {
+            queryParams: { path }
+          });
+        }
+      } else {
+        this.router.navigate(['view', { outlets: { viewer: [action.nodeId, action.versionId] } }]);
+      }
+    })
+  );
+
+  @Effect({ dispatch: false })
+  pluginPreview$ = this.actions$.pipe(
+    ofType<PluginPreviewAction>(ViewerActionTypes.PluginPreview),
+    tap((action) => {
+      this.router.navigate([
+        action.pluginRoute,
+        {
+          outlets: {
+            viewer: ['preview', action.nodeId]
+          }
+        }
+      ]);
     })
   );
 
@@ -149,10 +168,7 @@ export class ViewerEffects {
 
     let previewLocation = this.router.url;
     if (previewLocation.lastIndexOf('/') > 0) {
-      previewLocation = previewLocation.substr(
-        0,
-        this.router.url.indexOf('/', 1)
-      );
+      previewLocation = previewLocation.substr(0, this.router.url.indexOf('/', 1));
     }
     previewLocation = previewLocation.replace(/\//g, '');
 
@@ -165,9 +181,7 @@ export class ViewerEffects {
   }
 
   enterFullScreen() {
-    const container: any = document.documentElement.querySelector(
-      '.adf-viewer__fullscreen-container'
-    );
+    const container: any = document.documentElement.querySelector('.adf-viewer__fullscreen-container');
     if (container) {
       if (container.requestFullscreen) {
         container.requestFullscreen();
@@ -183,8 +197,7 @@ export class ViewerEffects {
 
   private getNavigationCommands(url: string): any[] {
     const urlTree: UrlTree = this.router.parseUrl(url);
-    const urlSegmentGroup: UrlSegmentGroup =
-      urlTree.root.children[PRIMARY_OUTLET];
+    const urlSegmentGroup: UrlSegmentGroup = urlTree.root.children[PRIMARY_OUTLET];
 
     if (!urlSegmentGroup) {
       return [url];
@@ -192,7 +205,7 @@ export class ViewerEffects {
 
     const urlSegments: UrlSegment[] = urlSegmentGroup.segments;
 
-    return urlSegments.reduce(function(acc, item) {
+    return urlSegments.reduce(function (acc, item) {
       acc.push(item.path, item.parameters);
       return acc;
     }, []);

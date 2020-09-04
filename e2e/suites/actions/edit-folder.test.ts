@@ -23,16 +23,22 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { SITE_VISIBILITY, SITE_ROLES } from '../../configs';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { CreateOrEditFolderDialog } from '../../components/dialog/create-edit-folder-dialog';
-import { Utils, clearTextWithBackspace } from '../../utilities/utils';
+import {
+  LoginPage,
+  BrowsingPage,
+  SITE_VISIBILITY,
+  SITE_ROLES,
+  RepoClient,
+  CreateOrEditFolderDialog,
+  Utils,
+  clearTextWithBackspace
+} from '@alfresco/aca-testing-shared';
 
 describe('Edit folder', () => {
   const username = `user-${Utils.random()}`;
 
-  const parent = `parent-${Utils.random()}`; let parentId;
+  const parent = `parent-${Utils.random()}`;
+  let parentId: string;
   const folderName = `folder-${Utils.random()}`;
   const folderDescription = 'my folder description';
 
@@ -47,16 +53,21 @@ describe('Edit folder', () => {
   const siteName = `site-${Utils.random()}`;
 
   const folderSite = `folder-site-${Utils.random()}`;
-  const folderSiteToEdit = `folder-site-${Utils.random()}`; let folderSiteToEditId;
+  const folderSiteToEdit = `folder-site-${Utils.random()}`;
+  let folderSiteToEditId: string;
   const duplicateFolderSite = `folder-${Utils.random()}`;
-  let docLibUserSite;
+  let docLibUserSite: string;
 
-  const folderFavorite = `folder-fav-${Utils.random()}`; let folderFavoriteId;
-  const folderFavoriteToEdit = `folder-fav-${Utils.random()}`; let folderFavoriteToEditId;
-  const folderFavoriteDuplicate = `folder-fav-${Utils.random()}`; let folderFavoriteDuplicateId;
+  const folderFavorite = `folder-fav-${Utils.random()}`;
+  let folderFavoriteId: string;
+  const folderFavoriteToEdit = `folder-fav-${Utils.random()}`;
+  let folderFavoriteToEditId: string;
+  const folderFavoriteDuplicate = `folder-fav-${Utils.random()}`;
+  let folderFavoriteDuplicateId: string;
 
   const folderSearch = `folder-search-${Utils.random()}`;
-  const folderSearchToEdit = `folder-search-${Utils.random()}`; let folderSearchToEditId;
+  const folderSearchToEdit = `folder-search-${Utils.random()}`;
+  let folderSearchToEditId: string;
   const folderSearchDuplicate = `folder-search-${Utils.random()}`;
 
   const apis = {
@@ -108,14 +119,17 @@ describe('Edit folder', () => {
     await Promise.all([
       apis.admin.sites.deleteSite(sitePrivate),
       apis.user.sites.deleteSite(siteName),
-      apis.user.nodes.deleteNodesById([ parentId, folderFavoriteToEditId, folderFavoriteDuplicateId, folderSearchToEditId ])
+      apis.user.nodes.deleteNodesById([parentId, folderFavoriteToEditId, folderFavoriteDuplicateId, folderSearchToEditId])
     ]);
     done();
   });
 
-  afterEach(async (done) => {
+  beforeEach(async () => {
     await Utils.pressEscape();
-    done();
+  });
+
+  afterEach(async () => {
+    await page.closeOpenDialogs();
   });
 
   it('[C216331] dialog UI defaults', async () => {
@@ -167,7 +181,7 @@ describe('Edit folder', () => {
     });
 
     it('[C216333] with name with special characters', async () => {
-      const namesWithSpecialChars = [ 'a*a', 'a"a', 'a<a', 'a>a', `a\\a`, 'a/a', 'a?a', 'a:a', 'a|a' ];
+      const namesWithSpecialChars = ['a*a', 'a"a', 'a<a', 'a>a', `a\\a`, 'a/a', 'a?a', 'a:a', 'a|a'];
 
       await dataTable.selectItem(folderName);
       await toolbar.openMoreMenu();

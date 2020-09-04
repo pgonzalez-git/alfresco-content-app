@@ -23,15 +23,9 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  AppStore,
-  DownloadNodesAction,
-  NodeActionTypes,
-  NodeInfo,
-  getAppSelection
-} from '@alfresco/aca-shared/store';
+import { AppStore, DownloadNodesAction, NodeActionTypes, NodeInfo, getAppSelection, getCurrentVersion } from '@alfresco/aca-shared/store';
 import { DownloadZipDialogComponent } from '@alfresco/adf-core';
-import { MinimalNodeEntity } from '@alfresco/js-api';
+import { MinimalNodeEntity, Version } from '@alfresco/js-api';
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Actions, Effect, ofType } from '@ngrx/effects';
@@ -41,26 +35,30 @@ import { ContentApiService } from '@alfresco/aca-shared';
 
 @Injectable()
 export class DownloadEffects {
-  constructor(
-    private store: Store<AppStore>,
-    private actions$: Actions,
-    private contentApi: ContentApiService,
-    private dialog: MatDialog
-  ) {}
+  constructor(private store: Store<AppStore>, private actions$: Actions, private contentApi: ContentApiService, private dialog: MatDialog) {}
 
   @Effect({ dispatch: false })
   downloadNode$ = this.actions$.pipe(
     ofType<DownloadNodesAction>(NodeActionTypes.Download),
-    map(action => {
+    map((action) => {
       if (action.payload && action.payload.length > 0) {
         this.downloadNodes(action.payload);
       } else {
         this.store
           .select(getAppSelection)
           .pipe(take(1))
-          .subscribe(selection => {
+          .subscribe((selection) => {
             if (selection && !selection.isEmpty) {
-              this.downloadNodes(selection.nodes);
+              this.store
+                .select(getCurrentVersion)
+                .pipe(take(1))
+                .subscribe((version) => {
+                  if (version) {
+                    this.downloadFileVersion(selection.nodes[0].entry, version.entry);
+                  } else {
+                    this.downloadNodes(selection.nodes);
+                  }
+                });
             }
           });
       }
@@ -68,7 +66,7 @@ export class DownloadEffects {
   );
 
   private downloadNodes(toDownload: Array<MinimalNodeEntity>) {
-    const nodes = toDownload.map(node => {
+    const nodes = toDownload.map((node) => {
       const { id, nodeId, name, isFile, isFolder } = node.entry as any;
 
       return {
@@ -106,16 +104,19 @@ export class DownloadEffects {
     }
 
     if (node && this.isSharedLinkPreview) {
-      this.download(
-        this.contentApi.getSharedLinkContent(node.id, false),
-        node.name
-      );
+      this.download(this.contentApi.getSharedLinkContent(node.id, false), node.name);
+    }
+  }
+
+  private downloadFileVersion(node: NodeInfo, version: Version) {
+    if (node && version) {
+      this.download(this.contentApi.getVersionContentUrl(node.id, version.id, true), version.name);
     }
   }
 
   private downloadZip(nodes: Array<NodeInfo>) {
     if (nodes && nodes.length > 0) {
-      const nodeIds = nodes.map(node => node.id);
+      const nodeIds = nodes.map((node) => node.id);
 
       this.dialog.open(DownloadZipDialogComponent, {
         width: '600px',

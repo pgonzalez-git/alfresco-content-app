@@ -28,9 +28,9 @@ import { SiteEntry } from '@alfresco/js-api';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { ContentManagementService } from '../../services/content-management.service';
 import { PageComponent } from '../page.component';
+import { AppExtensionService } from '@alfresco/aca-shared';
 
 @Component({
   templateUrl: './libraries.component.html'
@@ -57,11 +57,9 @@ export class LibrariesComponent extends PageComponent implements OnInit {
       this.content.libraryUpdated.subscribe(() => this.reload()),
       this.content.libraryLeft.subscribe(() => this.reload()),
 
-      this.breakpointObserver
-        .observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape])
-        .subscribe(result => {
-          this.isSmallScreen = result.matches;
-        })
+      this.breakpointObserver.observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape]).subscribe((result) => {
+        this.isSmallScreen = result.matches;
+      })
     );
 
     this.columns = this.extensions.documentListPresets.libraries || [];

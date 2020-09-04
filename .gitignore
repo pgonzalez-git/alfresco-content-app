@@ -19,6 +19,7 @@
 
 # IDE - VSCode
 .vscode/*
+!.vscode/closest-config-finder.sh
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -46,3 +47,4 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+!/.protractor-smartrunner/

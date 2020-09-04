@@ -24,12 +24,7 @@
  */
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import {
-  AlfrescoApiService,
-  NodeFavoriteDirective,
-  DataTableComponent,
-  AppConfigPipe
-} from '@alfresco/adf-core';
+import { AlfrescoApiService, NodeFavoriteDirective, DataTableComponent, AppConfigPipe } from '@alfresco/adf-core';
 import { DocumentListComponent } from '@alfresco/adf-content-services';
 import { TrashcanComponent } from './trashcan.component';
 import { AppTestingModule } from '../../testing/app-testing.module';
@@ -52,20 +47,14 @@ describe('TrashcanComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AppTestingModule],
-      declarations: [
-        DataTableComponent,
-        NodeFavoriteDirective,
-        DocumentListComponent,
-        TrashcanComponent,
-        AppConfigPipe
-      ],
+      declarations: [DataTableComponent, NodeFavoriteDirective, DocumentListComponent, TrashcanComponent, AppConfigPipe],
       schemas: [NO_ERRORS_SCHEMA]
     });
 
     fixture = TestBed.createComponent(TrashcanComponent);
     component = fixture.componentInstance;
 
-    alfrescoApi = TestBed.get(AlfrescoApiService);
+    alfrescoApi = TestBed.inject(AlfrescoApiService);
     alfrescoApi.reset();
 
     component.documentList = {
@@ -75,8 +64,6 @@ describe('TrashcanComponent', () => {
   });
 
   beforeEach(() => {
-    spyOn(alfrescoApi.nodesApi, 'getDeletedNodes').and.returnValue(
-      Promise.resolve(page)
-    );
+    spyOn(alfrescoApi.nodesApi, 'getDeletedNodes').and.returnValue(Promise.resolve(page));
   });
 });

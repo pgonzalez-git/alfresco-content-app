@@ -1,12 +1,6 @@
 <aca-page-layout [hasError]="!isValidPath">
   <aca-page-layout-header>
-    <adf-breadcrumb
-      [root]="title"
-      [folderNode]="node"
-      [maxItems]="isSmallScreen ? 1 : 0"
-      (navigate)="onBreadcrumbNavigate($event)"
-    >
-    </adf-breadcrumb>
+    <adf-breadcrumb [root]="title" [folderNode]="node" [maxItems]="isSmallScreen ? 1 : 0" (navigate)="onBreadcrumbNavigate($event)"> </adf-breadcrumb>
 
     <adf-toolbar class="adf-toolbar--inline">
       <ng-container *ngFor="let entry of actions; trackBy: trackByActionId">
@@ -21,28 +15,43 @@
 
   <aca-page-layout-content>
     <div class="main-content">
-      <adf-upload-drag-area [rootFolderId]="node?.id" [disabled]="!canUpload">
+      <adf-upload-drag-area [rootFolderId]="node?.id" [disabled]="!canUpload" (updateFileVersion)="onUploadNewVersion($event)">
         <adf-document-list
           #documentList
           acaDocumentList
           acaContextActions
           [display]="documentDisplayMode$ | async"
-          [sorting]="['modifiedAt', 'desc']"
           selectionMode="multiple"
           [currentFolderId]="node?.id"
+          [showHeader]="showHeader"
+          [node]="nodeResult"
           [allowDropFiles]="true"
           [navigate]="false"
+          [sorting]="['name', 'ASC']"
           [imageResolver]="imageResolver"
           (node-dblclick)="navigateTo($event.detail?.node)"
           (name-click)="navigateTo($event.detail?.node)"
+          (sorting-changed)="onSortingChanged($event)"
         >
+          <adf-custom-header-filter-template>
+            <ng-template let-col>
+              <adf-search-header
+                [col]="col"
+                [currentFolderNodeId]="node?.id"
+                [maxItems]="(documentList?.pagination | async)?.maxItems"
+                [value]="queryParams ? queryParams[col.key] : null"
+                [skipCount]="(documentList?.pagination | async)?.skipCount"
+                [sorting]="filterSorting"
+                (update)="onFilterUpdate($event)"
+                (clear)="onAllFilterCleared()"
+                (selection)="onFilterSelected($event)"
+              >
+              </adf-search-header>
+            </ng-template>
+          </adf-custom-header-filter-template>
           <data-columns>
             <ng-container *ngFor="let column of columns; trackBy: trackById">
-              <ng-container
-                *ngIf="
-                  column.template && !(column.desktopOnly && isSmallScreen)
-                "
-              >
+              <ng-container *ngIf="column.template && !(column.desktopOnly && isSmallScreen)">
                 <data-column
                   [key]="column.key"
                   [title]="column.title"
@@ -50,22 +59,15 @@
                   [format]="column.format"
                   [class]="column.class"
                   [sortable]="column.sortable"
+                  [sortingKey]="column.sortingKey || column.key"
                 >
                   <ng-template let-context>
-                    <adf-dynamic-column
-                      [id]="column.template"
-                      [context]="context"
-                    >
-                    </adf-dynamic-column>
+                    <adf-dynamic-column [id]="column.template" [context]="context"> </adf-dynamic-column>
                   </ng-template>
                 </data-column>
               </ng-container>
 
-              <ng-container
-                *ngIf="
-                  !column.template && !(column.desktopOnly && isSmallScreen)
-                "
-              >
+              <ng-container *ngIf="!column.template && !(column.desktopOnly && isSmallScreen)">
                 <data-column
                   [key]="column.key"
                   [title]="column.title"
@@ -73,6 +75,7 @@
                   [format]="column.format"
                   [class]="column.class"
                   [sortable]="column.sortable"
+                  [sortingKey]="column.sortingKey || column.key"
                 >
                 </data-column>
               </ng-container>

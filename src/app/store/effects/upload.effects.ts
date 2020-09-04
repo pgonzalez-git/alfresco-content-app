@@ -37,9 +37,10 @@ import { FileModel, FileUtils, UploadService } from '@alfresco/adf-core';
 import { Injectable, NgZone, RendererFactory2 } from '@angular/core';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { forkJoin, of } from 'rxjs';
-import { tap, filter, catchError, flatMap, map, take } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, map, take } from 'rxjs/operators';
 import { ContentManagementService } from '../../services/content-management.service';
+import { MinimalNodeEntryEntity } from '@alfresco/js-api';
 
 @Injectable()
 export class UploadEffects {
@@ -62,16 +63,16 @@ export class UploadEffects {
     this.fileInput.type = 'file';
     this.fileInput.style.display = 'none';
     this.fileInput.setAttribute('multiple', '');
-    this.fileInput.addEventListener('change', event => this.upload(event));
+    this.fileInput.addEventListener('change', (event) => this.upload(event));
     renderer.appendChild(document.body, this.fileInput);
 
     this.fileVersionInput = renderer.createElement('input') as HTMLInputElement;
     this.fileVersionInput.id = 'app-upload-file-version';
     this.fileVersionInput.type = 'file';
     this.fileVersionInput.style.display = 'none';
-    this.fileVersionInput.addEventListener('change', () =>
-      this.uploadVersion()
-    );
+    this.fileVersionInput.addEventListener('change', () => {
+      this.uploadVersion();
+    });
     renderer.appendChild(document.body, this.fileVersionInput);
 
     this.folderInput = renderer.createElement('input') as HTMLInputElement;
@@ -80,7 +81,7 @@ export class UploadEffects {
     this.folderInput.style.display = 'none';
     this.folderInput.setAttribute('directory', '');
     this.folderInput.setAttribute('webkitdirectory', '');
-    this.folderInput.addEventListener('change', event => this.upload(event));
+    this.folderInput.addEventListener('change', (event) => this.upload(event));
     renderer.appendChild(document.body, this.folderInput);
   }
 
@@ -103,55 +104,31 @@ export class UploadEffects {
   @Effect({ dispatch: false })
   uploadVersion$ = this.actions$.pipe(
     ofType<UploadFileVersionAction>(UploadActionTypes.UploadFileVersion),
-    map(() => {
-      this.fileVersionInput.click();
+    map((action) => {
+      if (action && action.payload) {
+        const node = action.payload.detail.data.node.entry;
+        const file: any = action.payload.detail.files[0].file;
+        this.contentService.versionUpdateDialog(node, file);
+      } else if (!action.payload) {
+        this.fileVersionInput.click();
+      }
     })
   );
 
-  private uploadVersion() {
+  uploadVersion() {
     this.contentService
-      .versionUploadDialog()
-      .afterClosed()
+      .getNodeInfo()
       .pipe(
-        tap(form => {
-          if (!form) {
-            this.fileVersionInput.value = '';
-          }
-        }),
-        filter(form => !!form),
-        flatMap(form =>
-          forkJoin(
-            of(form),
-            this.contentService.getNodeInfo().pipe(
-              catchError(_ => {
-                this.store.dispatch(
-                  new SnackbarErrorAction('VERSION.ERROR.GENERIC')
-                );
-                return of(null);
-              })
-            )
-          )
-        )
+        catchError((_) => {
+          this.store.dispatch(new SnackbarErrorAction('VERSION.ERROR.GENERIC'));
+          return of(null);
+        })
       )
-      .subscribe(([form, node]) => {
-        if (form && node) {
-          const file: any = this.fileVersionInput.files[0];
-          const fileModel = new FileModel(
-            file,
-            {
-              comment: form.comment,
-              majorVersion: form.version,
-              parentId: node.parentId,
-              path: (file.webkitRelativePath || '').replace(/\/[^\/]*$/, ''),
-              newVersion: true,
-              nodeType: 'cm:content'
-            },
-            node.id
-          );
-          this.uploadAndUnlock(fileModel);
+      .subscribe((node: MinimalNodeEntryEntity) => {
+        if (node) {
+          this.contentService.versionUpdateDialog(node, this.fileVersionInput.files[0]);
+          this.fileVersionInput.value = '';
         }
-
-        this.fileVersionInput.value = '';
       });
   }
 
@@ -159,7 +136,7 @@ export class UploadEffects {
     this.store
       .select(getCurrentFolder)
       .pipe(take(1))
-      .subscribe(node => {
+      .subscribe((node) => {
         if (node && node.id) {
           const input = event.currentTarget as HTMLInputElement;
           const files = FileUtils.toFileArray(input.files).map((file: any) => {
@@ -194,21 +171,19 @@ export class UploadEffects {
       this.uploadService.addToQueue(file);
       this.uploadService.uploadFilesInTheQueue();
 
-      const subscription = this.uploadService.fileUploadComplete.subscribe(
-        completed => {
-          if (
-            file.data &&
-            file.data.entry &&
-            file.data.entry.properties &&
-            file.data.entry.properties['cm:lockType'] === 'WRITE_LOCK' &&
-            file.data.entry.id === completed.data.entry.id
-          ) {
-            this.store.dispatch(new UnlockWriteAction(completed.data));
-          }
-
-          subscription.unsubscribe();
+      const subscription = this.uploadService.fileUploadComplete.subscribe((completed) => {
+        if (
+          file.data &&
+          file.data.entry &&
+          file.data.entry.properties &&
+          file.data.entry.properties['cm:lockType'] === 'WRITE_LOCK' &&
+          file.data.entry.id === completed.data.entry.id
+        ) {
+          this.store.dispatch(new UnlockWriteAction(completed.data));
         }
-      );
+
+        subscription.unsubscribe();
+      });
     });
   }
 }

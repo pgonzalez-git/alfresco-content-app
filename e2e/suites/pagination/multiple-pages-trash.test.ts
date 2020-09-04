@@ -23,10 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { Utils } from '../../utilities/utils';
-import { AdminActions } from '../../utilities/admin-actions';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
+import { LoginPage, BrowsingPage, Utils, AdminActions, RepoClient } from '@alfresco/aca-testing-shared';
 
 describe('Pagination on multiple pages on Trash', () => {
   const random = Utils.random();
@@ -46,10 +43,10 @@ describe('Pagination on multiple pages on Trash', () => {
 
   beforeAll(async () => {
     await adminApiActions.createUser({ username });
-    filesDeletedIds = (await userApi.nodes.createFiles(filesForDelete)).list.entries.map(entries => entries.entry.id);
+    filesDeletedIds = (await userApi.nodes.createFiles(filesForDelete)).list.entries.map((entries: any) => entries.entry.id);
 
     await userApi.nodes.deleteNodesById(filesDeletedIds, false);
-    await userApi.trashcan.waitForApi({expect: 101});
+    await userApi.trashcan.waitForApi({ expect: 101 });
 
     await loginPage.loginWith(username);
     await page.clickTrashAndWait();

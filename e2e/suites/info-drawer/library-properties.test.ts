@@ -23,11 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { SITE_VISIBILITY, SITE_ROLES } from '../../configs';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { InfoDrawer } from './../../components/info-drawer/info-drawer';
-import { Utils } from '../../utilities/utils';
+import { LoginPage, BrowsingPage, SITE_VISIBILITY, SITE_ROLES, RepoClient, InfoDrawer, Utils } from '@alfresco/aca-testing-shared';
 
 describe('Library properties', () => {
   const username = `user1-${Utils.random()}`;
@@ -52,7 +48,7 @@ describe('Library properties', () => {
     name: `site-for-rename-${Utils.random()}`,
     visibility: SITE_VISIBILITY.PRIVATE,
     description: 'new description'
-  }
+  };
 
   const siteDup = `site3-${Utils.random()}`;
 
@@ -95,7 +91,7 @@ describe('Library properties', () => {
     done();
   });
 
-  afterEach(async done => {
+  afterEach(async (done) => {
     if (await infoDrawer.isOpen()) {
       await page.toolbar.viewDetailsButton.click();
     }
@@ -108,7 +104,7 @@ describe('Library properties', () => {
     await infoDrawer.waitForInfoDrawerToOpen();
 
     expect(await infoDrawer.getHeaderTitle()).toEqual('Details');
-    expect(await infoDrawer.isAboutTabDisplayed()).toBe(true, 'About tab is not displayed');
+    expect(await infoDrawer.isPropertiesTabDisplayed()).toBe(true, 'Properties tab is not displayed');
     expect(await aboutTab.isNameDisplayed()).toBe(true, 'Name field not displayed');
     expect(await aboutTab.isLibraryIdDisplayed()).toBe(true, 'Library ID field not displayed');
     expect(await aboutTab.isVisibilityDisplayed()).toBe(true, 'Visibility field not displayed');
@@ -116,7 +112,7 @@ describe('Library properties', () => {
 
     expect(await aboutTab.getName()).toEqual(site.name);
     expect(await aboutTab.getLibraryId()).toEqual(site.id);
-    expect((await aboutTab.getVisibility()).toLowerCase()).toEqual((site.visibility).toLowerCase());
+    expect((await aboutTab.getVisibility()).toLowerCase()).toEqual(site.visibility.toLowerCase());
     expect(await aboutTab.getDescription()).toEqual(site.description);
 
     expect(await aboutTab.isEditLibraryPropertiesDisplayed()).toBe(true, 'Edit action is not displayed');
@@ -227,19 +223,16 @@ describe('Library properties', () => {
   });
 
   describe('Non manager', () => {
-    afterAll(async done => {
+    afterAll(async (done) => {
       await loginPage.loginWith(username);
       done();
     });
 
-    it('[C289337] Edit button is not displayed when user is not the library manager', async () => {
+    it('[C289337] Info drawer button is not displayed when user is not the library manager', async () => {
       await loginPage.loginWith(user2);
-
       await page.clickFileLibrariesAndWait();
       await dataTable.selectItem(site.name);
-      await page.toolbar.viewDetailsButton.click();
-      await infoDrawer.waitForInfoDrawerToOpen();
-      expect(await aboutTab.isEditLibraryPropertiesDisplayed()).toBe(false, 'Edit action is displayed');
+      expect(await page.toolbar.isButtonPresent('View Details')).toBe(false, 'View Details is present');
     });
 
     it('[C289344] Error notification', async () => {
@@ -259,5 +252,4 @@ describe('Library properties', () => {
       expect(await page.getSnackBarMessage()).toEqual('There was an error updating library properties');
     });
   });
-
 });

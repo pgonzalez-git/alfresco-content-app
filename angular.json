@@ -11,6 +11,16 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "aot": true,
+            "allowedCommonJsDependencies": [
+              "minimatch",
+              "minimatch-browser",
+              "moment-es6",
+              "superagent",
+              "event-emitter",
+              "brace-expansion",
+              "d"
+            ],
             "outputPath": "dist/app",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -85,8 +95,7 @@
               "node_modules/pdfjs-dist/build/pdf.js",
               "node_modules/pdfjs-dist/web/pdf_viewer.js",
               "node_modules/moment/min/moment.min.js"
-            ],
-            "es5BrowserSupport": true
+            ]
           },
           "configurations": {
             "production": {
@@ -117,10 +126,20 @@
                   "name": "vendor",
                   "maximumWarning": "10mb",
                   "maximumError": "15mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
                 }
               ]
             },
             "e2e": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
@@ -160,7 +179,12 @@
           "builder": "@angular-custom-builders/lite-serve:dist-serve",
           "options": {
             "publicHost": "http://localhost:4200",
-            "outputPath": "dist/app"
+            "browserTarget": "app:build"
+          },
+          "configurations": {
+            "standalone": {
+                "watch": true
+            }
           }
         },
         "extract-i18n": {
@@ -256,7 +280,8 @@
           "options": {
             "protractorConfig": "protractor.conf.js",
             "webdriverUpdate": false,
-            "devServerTarget": "app:lite-serve"
+            "devServerTarget": "app:lite-serve",
+            "invertGrep": true
           }
         },
         "lint": {
@@ -284,6 +309,11 @@
           "options": {
             "tsConfig": "projects/adf-office-services-ext/tsconfig.lib.json",
             "project": "projects/adf-office-services-ext/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/adf-office-services-ext/tsconfig.lib.prod.json"
+            }
           }
         },
         "test": {
@@ -319,6 +349,11 @@
           "options": {
             "tsConfig": "projects/aca-shared/tsconfig.lib.json",
             "project": "projects/aca-shared/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/aca-shared/tsconfig.lib.prod.json"
+            }
           }
         },
         "test": {
@@ -342,16 +377,25 @@
           }
         }
       }
+    },
+    "aca-testing-shared": {
+      "root": "projects/aca-testing-shared",
+      "sourceRoot": "projects/aca-testing-shared/src",
+      "projectType": "library",
+      "prefix": "lib"
     }
   },
   "defaultProject": "app",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "aca",
-      "styleext": "scss"
+      "style": "scss"
     },
     "@schematics/angular:directive": {
       "prefix": "aca"
     }
+  },
+  "cli": {
+    "analytics": "a5069b3a-642d-4d97-b810-0c24d7628413"
   }
 }

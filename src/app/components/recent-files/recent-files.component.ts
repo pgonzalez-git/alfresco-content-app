@@ -30,10 +30,10 @@ import { ContentManagementService } from '../../services/content-management.serv
 import { PageComponent } from '../page.component';
 import { Store } from '@ngrx/store';
 import { AppStore } from '@alfresco/aca-shared/store';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { UploadService } from '@alfresco/adf-core';
 import { debounceTime } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { AppExtensionService } from '@alfresco/aca-shared';
 
 @Component({
   templateUrl: './recent-files.component.html'
@@ -58,18 +58,12 @@ export class RecentFilesComponent extends PageComponent implements OnInit {
     super.ngOnInit();
 
     this.subscriptions = this.subscriptions.concat([
-      this.uploadService.fileUploadComplete
-        .pipe(debounceTime(300))
-        .subscribe(() => this.onFileUploadedEvent()),
-      this.uploadService.fileUploadDeleted
-        .pipe(debounceTime(300))
-        .subscribe(() => this.onFileUploadedEvent()),
+      this.uploadService.fileUploadComplete.pipe(debounceTime(300)).subscribe(() => this.onFileUploadedEvent()),
+      this.uploadService.fileUploadDeleted.pipe(debounceTime(300)).subscribe(() => this.onFileUploadedEvent()),
 
-      this.breakpointObserver
-        .observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape])
-        .subscribe(result => {
-          this.isSmallScreen = result.matches;
-        })
+      this.breakpointObserver.observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape]).subscribe((result) => {
+        this.isSmallScreen = result.matches;
+      })
     ]);
 
     this.columns = this.extensions.documentListPresets.recent || [];

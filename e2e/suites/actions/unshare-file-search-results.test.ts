@@ -24,28 +24,39 @@
  */
 
 import { browser } from 'protractor';
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { SITE_VISIBILITY, SITE_ROLES } from '../../configs';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { ShareDialog } from '../../components/dialog/share-dialog';
-import { ConfirmDialog } from '../../components/dialog/confirm-dialog';
-import { Viewer } from '../../components/viewer/viewer';
-import { Utils } from '../../utilities/utils';
+import {
+  LoginPage,
+  BrowsingPage,
+  SITE_VISIBILITY,
+  SITE_ROLES,
+  RepoClient,
+  ShareDialog,
+  ConfirmDialog,
+  Viewer,
+  Utils
+} from '@alfresco/aca-testing-shared';
 
 describe('Unshare a file from Search Results', () => {
   const username = `user-${Utils.random()}`;
 
-  const parent = `parent-${Utils.random()}`; let parentId;
+  const parent = `parent-${Utils.random()}`;
+  let parentId: string;
 
-  const file1 = `search-file1-${Utils.random()}.txt`; let file1Id;
-  const file2 = `search-file2-${Utils.random()}.txt`; let file2Id;
-  const file3 = `search-file3-${Utils.random()}.txt`; let file3Id;
-  const file4 = `search-file4-${Utils.random()}.txt`; let file4Id;
+  const file1 = `search-file1-${Utils.random()}.txt`;
+  let file1Id: string;
+  const file2 = `search-file2-${Utils.random()}.txt`;
+  let file2Id: string;
+  const file3 = `search-file3-${Utils.random()}.txt`;
+  let file3Id: string;
+  const file4 = `search-file4-${Utils.random()}.txt`;
+  let file4Id: string;
 
   const sitePrivate = `site-private-${Utils.random()}`;
 
-  const fileSite1 = `search-fileSite1-${Utils.random()}.txt`; let fileSite1Id;
-  const fileSite2 = `search-fileSite2-${Utils.random()}.txt`; let fileSite2Id;
+  const fileSite1 = `search-fileSite1-${Utils.random()}.txt`;
+  let fileSite1Id: string;
+  const fileSite2 = `search-fileSite2-${Utils.random()}.txt`;
+  let fileSite2Id: string;
 
   const apis = {
     admin: new RepoClient(),
@@ -235,5 +246,4 @@ describe('Unshare a file from Search Results', () => {
     expect(await shareDialog.isDialogOpen()).toBe(false, 'Share dialog open');
     expect(await apis.user.nodes.isFileShared(fileSite2Id)).toBe(false, `${fileSite2} is shared`);
   });
-
 });

@@ -30,6 +30,8 @@ import { ExtensionService } from '@alfresco/adf-extensions';
 import { CoreModule } from '@alfresco/adf-core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
+import { AppTestingModule } from '../../../testing/app-testing.module';
 
 describe('ToggleFavoriteComponent', () => {
   let component: ToggleFavoriteComponent;
@@ -49,18 +51,14 @@ describe('ToggleFavoriteComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [CoreModule.forRoot()],
+      imports: [TranslateModule.forRoot(), CoreModule.forRoot(), AppTestingModule],
       declarations: [ToggleFavoriteComponent],
-      providers: [
-        ExtensionService,
-        { provide: Store, useValue: mockStore },
-        { provide: Router, useValue: mockRouter }
-      ]
+      providers: [ExtensionService, { provide: Store, useValue: mockStore }, { provide: Router, useValue: mockRouter }]
     });
 
     fixture = TestBed.createComponent(ToggleFavoriteComponent);
     component = fixture.componentInstance;
-    router = TestBed.get(Router);
+    router = TestBed.inject(Router);
   });
 
   afterEach(() => {
@@ -73,11 +71,12 @@ describe('ToggleFavoriteComponent', () => {
 
   it('should not dispatch reload if route is not specified', () => {
     component.data = "['/reload_on_this_route']";
+    router.url = '/somewhere_over_the_rainbow';
 
     fixture.detectChanges();
     component.onToggleEvent();
 
-    expect(mockStore.dispatch).not.toHaveBeenCalled();
+    expect(mockStore.dispatch).toHaveBeenCalled();
   });
 
   it('should dispatch reload if route is specified', () => {

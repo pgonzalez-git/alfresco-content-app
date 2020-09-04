@@ -23,7 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContentApiService } from '@alfresco/aca-shared';
+import { AppExtensionService, ContentApiService } from '@alfresco/aca-shared';
 import {
   AppStore,
   getAppSelection,
@@ -32,29 +32,18 @@ import {
   ClosePreviewAction,
   ViewerActionTypes,
   ViewNodeAction,
-  ReloadDocumentListAction
+  ReloadDocumentListAction,
+  SetCurrentNodeVersionAction
 } from '@alfresco/aca-shared/store';
 import { ContentActionRef, SelectionState } from '@alfresco/adf-extensions';
-import { MinimalNodeEntryEntity, SearchRequest } from '@alfresco/js-api';
-import {
-  Component,
-  HostListener,
-  OnDestroy,
-  OnInit,
-  ViewEncapsulation
-} from '@angular/core';
+import { MinimalNodeEntryEntity, SearchRequest, VersionEntry } from '@alfresco/js-api';
+import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router, PRIMARY_OUTLET } from '@angular/router';
-import {
-  UserPreferencesService,
-  ObjectUtils,
-  UploadService,
-  AlfrescoApiService
-} from '@alfresco/adf-core';
+import { UserPreferencesService, ObjectUtils, UploadService, AlfrescoApiService } from '@alfresco/adf-core';
 import { ContentManagementService } from '../../services/content-management.service';
 import { Store } from '@ngrx/store';
 import { from, Observable, Subject } from 'rxjs';
 import { takeUntil, debounceTime } from 'rxjs/operators';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { Actions, ofType } from '@ngrx/effects';
 
 @Component({
@@ -70,6 +59,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   fileName: string;
   folderId: string = null;
   nodeId: string = null;
+  versionId: string = null;
   node: MinimalNodeEntryEntity;
   selection: SelectionState;
   infoDrawerOpened$: Observable<boolean>;
@@ -83,13 +73,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   nextNodeId: string;
   navigateMultiple = true;
   routesSkipNavigation = ['shared', 'recent-files', 'favorites'];
-  navigationSources = [
-    'favorites',
-    'libraries',
-    'personal-files',
-    'recent-files',
-    'shared'
-  ];
+  navigationSources = ['favorites', 'libraries', 'personal-files', 'recent-files', 'shared'];
   recentFileFilters = [
     'TYPE:"content"',
     '-PNAME:"0/wiki"',
@@ -116,11 +100,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
 
   private navigationPath: string;
   private previewLocation: string;
-  private containersSkipNavigation = [
-    'adf-viewer__sidebar',
-    'cdk-overlay-container',
-    'adf-image-viewer'
-  ];
+  private containersSkipNavigation = ['adf-viewer__sidebar', 'cdk-overlay-container', 'adf-image-viewer'];
 
   constructor(
     private router: Router,
@@ -140,29 +120,37 @@ export class AppViewerComponent implements OnInit, OnDestroy {
 
     from(this.infoDrawerOpened$)
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(val => {
+      .subscribe((val) => {
         this.showRightSide = val;
       });
 
     this.store
       .select(getAppSelection)
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(selection => {
+      .subscribe((selection) => {
         this.selection = selection;
 
         this.toolbarActions = this.extensions.getViewerToolbarActions();
         this.openWith = this.extensions.openWithActions;
       });
 
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       this.folderId = params.folderId;
       const { nodeId } = params;
+      this.versionId = params.versionId;
+      if (this.versionId) {
+        this.apiService.versionsApi.getVersion(nodeId, this.versionId).then((version: VersionEntry) => {
+          if (version) {
+            this.store.dispatch(new SetCurrentNodeVersionAction(version));
+          }
+        });
+      }
       if (nodeId) {
         this.displayNode(nodeId);
       }
     });
 
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       this.navigationPath = params.path;
     });
 
@@ -173,34 +161,21 @@ export class AppViewerComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.actions$
-      .pipe(
-        ofType<ClosePreviewAction>(ViewerActionTypes.ClosePreview),
-        takeUntil(this.onDestroy$)
-      )
-      .subscribe(() => this.navigateToFileLocation());
+    this.actions$.pipe(ofType<ClosePreviewAction>(ViewerActionTypes.ClosePreview), takeUntil(this.onDestroy$)).subscribe(() => {
+      this.store.dispatch(new SetCurrentNodeVersionAction(null));
+      this.navigateToFileLocation();
+    });
 
-    this.content.nodesDeleted
-      .pipe(takeUntil(this.onDestroy$))
-      .subscribe(() => this.navigateToFileLocation());
+    this.content.nodesDeleted.pipe(takeUntil(this.onDestroy$)).subscribe(() => this.navigateToFileLocation());
 
-    this.uploadService.fileUploadDeleted
-      .pipe(takeUntil(this.onDestroy$))
-      .subscribe(() => this.navigateToFileLocation());
+    this.uploadService.fileUploadDeleted.pipe(takeUntil(this.onDestroy$)).subscribe(() => this.navigateToFileLocation());
 
-    this.uploadService.fileUploadComplete
-      .pipe(
-        debounceTime(300),
-        takeUntil(this.onDestroy$)
-      )
-      .subscribe(file => {
-        this.apiService.nodeUpdated.next(file.data.entry);
-        this.displayNode(file.data.entry.id);
-      });
+    this.uploadService.fileUploadComplete.pipe(debounceTime(300), takeUntil(this.onDestroy$)).subscribe((file) => {
+      this.apiService.nodeUpdated.next(file.data.entry);
+      this.displayNode(file.data.entry.id);
+    });
 
-    this.previewLocation = this.router.url
-      .substr(0, this.router.url.indexOf('/', 1))
-      .replace(/\//g, '');
+    this.previewLocation = this.router.url.substr(0, this.router.url.indexOf('/', 1)).replace(/\//g, '');
   }
 
   onViewerVisibilityChanged() {
@@ -209,6 +184,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.store.dispatch(new SetCurrentNodeVersionAction(null));
     this.onDestroy$.next(true);
     this.onDestroy$.complete();
   }
@@ -224,10 +200,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
         this.store.dispatch(new SetSelectedNodesAction([{ entry: this.node }]));
 
         if (this.node && this.node.isFile) {
-          const nearest = await this.getNearestNodes(
-            this.node.id,
-            this.node.parentId
-          );
+          const nearest = await this.getNearestNodes(this.node.id, this.node.parentId);
 
           this.previousNodeId = nearest.left;
           this.nextNodeId = nearest.right;
@@ -239,21 +212,16 @@ export class AppViewerComponent implements OnInit, OnDestroy {
         const statusCode = JSON.parse(error.message).error.statusCode;
 
         if (statusCode !== 401) {
-          this.router
-            .navigate([this.previewLocation, { outlets: { viewer: null } }])
-            .then(() => {
-              this.router.navigate([this.previewLocation, id]);
-            });
+          this.router.navigate([this.previewLocation, { outlets: { viewer: null } }]).then(() => {
+            this.router.navigate([this.previewLocation, id]);
+          });
         }
       }
     }
   }
 
   onNavigateBefore(event: MouseEvent | KeyboardEvent): void {
-    if (
-      event.type !== 'click' &&
-      this.shouldNavigate(event.target as HTMLElement)
-    ) {
+    if (event.type !== 'click' && this.shouldNavigate(event.target as HTMLElement)) {
       return;
     }
 
@@ -262,10 +230,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   }
 
   onNavigateNext(event: MouseEvent | KeyboardEvent): void {
-    if (
-      event.type !== 'click' &&
-      this.shouldNavigate(event.target as HTMLElement)
-    ) {
+    if (event.type !== 'click' && this.shouldNavigate(event.target as HTMLElement)) {
       return;
     }
 
@@ -278,10 +243,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
    * @param nodeId Unique identifier of the document node
    * @param folderId Unique identifier of the containing folder node.
    */
-  async getNearestNodes(
-    nodeId: string,
-    folderId: string
-  ): Promise<{ left: string; right: string }> {
+  async getNearestNodes(nodeId: string, folderId: string): Promise<{ left: string; right: string }> {
     const empty = {
       left: null,
       right: null
@@ -315,10 +277,8 @@ export class AppViewerComponent implements OnInit, OnDestroy {
    */
   async getFileIds(source: string, folderId?: string): Promise<string[]> {
     if ((source === 'personal-files' || source === 'libraries') && folderId) {
-      const sortKey =
-        this.preferences.get('personal-files.sorting.key') || 'modifiedAt';
-      const sortDirection =
-        this.preferences.get('personal-files.sorting.direction') || 'desc';
+      const sortKey = this.preferences.get('personal-files.sorting.key') || 'modifiedAt';
+      const sortDirection = this.preferences.get('personal-files.sorting.direction') || 'desc';
       const nodes = await this.contentApi
         .getNodeChildren(folderId, {
           // orderBy: `${sortKey} ${sortDirection}`,
@@ -327,10 +287,10 @@ export class AppViewerComponent implements OnInit, OnDestroy {
         })
         .toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortKey, sortDirection);
 
-      return entries.map(obj => obj.id);
+      return entries.map((obj) => obj.id);
     }
 
     if (source === 'favorites') {
@@ -341,21 +301,17 @@ export class AppViewerComponent implements OnInit, OnDestroy {
         })
         .toPromise();
 
-      const sortKey =
-        this.preferences.get('favorites.sorting.key') || 'modifiedAt';
-      const sortDirection =
-        this.preferences.get('favorites.sorting.direction') || 'desc';
-      const files = nodes.list.entries.map(obj => obj.entry.target.file);
+      const sortKey = this.preferences.get('favorites.sorting.key') || 'modifiedAt';
+      const sortDirection = this.preferences.get('favorites.sorting.direction') || 'desc';
+      const files = nodes.list.entries.map((obj) => obj.entry.target.file);
       this.sort(files, sortKey, sortDirection);
 
-      return files.map(f => f.id);
+      return files.map((f) => f.id);
     }
 
     if (source === 'shared') {
-      const sortingKey =
-        this.preferences.get('shared.sorting.key') || 'modifiedAt';
-      const sortingDirection =
-        this.preferences.get('shared.sorting.direction') || 'desc';
+      const sortingKey = this.preferences.get('shared.sorting.key') || 'modifiedAt';
+      const sortingDirection = this.preferences.get('shared.sorting.direction') || 'desc';
 
       const nodes = await this.contentApi
         .findSharedLinks({
@@ -363,19 +319,17 @@ export class AppViewerComponent implements OnInit, OnDestroy {
         })
         .toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortingKey, sortingDirection);
 
-      return entries.map(obj => obj.nodeId);
+      return entries.map((obj) => obj.nodeId);
     }
 
     if (source === 'recent-files') {
       const person = await this.contentApi.getPerson('-me-').toPromise();
       const username = person.entry.id;
-      const sortingKey =
-        this.preferences.get('recent-files.sorting.key') || 'modifiedAt';
-      const sortingDirection =
-        this.preferences.get('recent-files.sorting.direction') || 'desc';
+      const sortingKey = this.preferences.get('recent-files.sorting.key') || 'modifiedAt';
+      const sortingDirection = this.preferences.get('recent-files.sorting.direction') || 'desc';
 
       const query: SearchRequest = {
         query: {
@@ -401,10 +355,10 @@ export class AppViewerComponent implements OnInit, OnDestroy {
       };
       const nodes = await this.contentApi.search(query).toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortingKey, sortingDirection);
 
-      return entries.map(obj => obj.id);
+      return entries.map((obj) => obj.id);
     }
 
     return [];
@@ -444,23 +398,19 @@ export class AppViewerComponent implements OnInit, OnDestroy {
     items.sort((a: any, b: any) => {
       let left = ObjectUtils.getValue(a, key);
       if (left) {
-        left =
-          left instanceof Date ? left.valueOf().toString() : left.toString();
+        left = left instanceof Date ? left.valueOf().toString() : left.toString();
       } else {
         left = '';
       }
 
       let right = ObjectUtils.getValue(b, key);
       if (right) {
-        right =
-          right instanceof Date ? right.valueOf().toString() : right.toString();
+        right = right instanceof Date ? right.valueOf().toString() : right.toString();
       } else {
         right = '';
       }
 
-      return direction === 'asc'
-        ? left.localeCompare(right, undefined, options)
-        : right.localeCompare(left, undefined, options);
+      return direction === 'asc' ? left.localeCompare(right, undefined, options) : right.localeCompare(left, undefined, options);
     });
   }
 
@@ -470,9 +420,7 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   }
 
   private getFileLocation(): string {
-    return this.router
-      .parseUrl(this.navigationPath || this.router.url)
-      .root.children[PRIMARY_OUTLET].toString();
+    return this.router.parseUrl(this.navigationPath || this.router.url).root.children[PRIMARY_OUTLET].toString();
   }
 
   private shouldNavigate(element: HTMLElement): boolean {
@@ -486,8 +434,6 @@ export class AppViewerComponent implements OnInit, OnDestroy {
   }
 
   private isChild(list: DOMTokenList): boolean {
-    return Array.from(list).some((className: string) =>
-      this.containersSkipNavigation.includes(className)
-    );
+    return Array.from(list).some((className: string) => this.containersSkipNavigation.includes(className));
   }
 }

@@ -30,12 +30,9 @@ import { AppTestingModule } from '../../../testing/app-testing.module';
 import { AppConfigService, setupTestBed, CoreModule } from '@alfresco/adf-core';
 import { ContentMetadataModule } from '@alfresco/adf-content-services';
 import { Store } from '@ngrx/store';
-import {
-  SetInfoDrawerMetadataAspectAction,
-  AppState
-} from '@alfresco/aca-shared/store';
+import { SetInfoDrawerMetadataAspectAction, AppState } from '@alfresco/aca-shared/store';
 import { By } from '@angular/platform-browser';
-import { AppExtensionService } from '../../../extensions/extension.service';
+import { AppExtensionService } from '@alfresco/aca-shared';
 
 describe('MetadataTabComponent', () => {
   let fixture: ComponentFixture<MetadataTabComponent>;
@@ -55,8 +52,8 @@ describe('MetadataTabComponent', () => {
 
   describe('content-metadata configuration', () => {
     beforeEach(() => {
-      appConfig = TestBed.get(AppConfigService);
-      extensions = TestBed.get(AppExtensionService);
+      appConfig = TestBed.inject(AppConfigService);
+      extensions = TestBed.inject(AppExtensionService);
     });
 
     it('should remain unchanged when metadata extension is missing', () => {
@@ -74,12 +71,8 @@ describe('MetadataTabComponent', () => {
 
       fixture = TestBed.createComponent(MetadataTabComponent);
 
-      expect(appConfig.config['content-metadata']).not.toEqual(
-        'initial config'
-      );
-      expect(appConfig.config['content-metadata']).toEqual(
-        extensions.contentMetadata
-      );
+      expect(appConfig.config['content-metadata']).not.toEqual('initial config');
+      expect(appConfig.config['content-metadata']).toEqual(extensions.contentMetadata);
     });
   });
 
@@ -136,26 +129,22 @@ describe('MetadataTabComponent', () => {
   describe('displayAspect', () => {
     beforeEach(() => {
       fixture = TestBed.createComponent(MetadataTabComponent);
-      store = TestBed.get(Store);
+      store = TestBed.inject(Store);
       component = fixture.componentInstance;
     });
 
     it('show pass empty when store is in initial state', () => {
-      const initialState = fixture.debugElement.query(
-        By.css('adf-content-metadata-card')
-      );
+      const initialState = fixture.debugElement.query(By.css('adf-content-metadata-card'));
       expect(initialState.componentInstance.displayAspect).toBeFalsy();
     });
 
     it('should update the exif if store got updated', () => {
       store.dispatch(new SetInfoDrawerMetadataAspectAction('EXIF'));
-      component.displayAspect$.subscribe(aspect => {
+      component.displayAspect$.subscribe((aspect) => {
         expect(aspect).toBe('EXIF');
       });
       fixture.detectChanges();
-      const initialState = fixture.debugElement.query(
-        By.css('adf-content-metadata-card')
-      );
+      const initialState = fixture.debugElement.query(By.css('adf-content-metadata-card'));
       expect(initialState.componentInstance.displayAspect).toBe('EXIF');
     });
   });

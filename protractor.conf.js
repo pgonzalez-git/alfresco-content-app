@@ -2,20 +2,28 @@
 // https://github.com/angular/protractor/blob/master/lib/config.ts
 
 const path = require('path');
-const { SpecReporter } = require('jasmine-spec-reporter');
-const jasmineReporters = require('jasmine-reporters');
-const CDP = require('chrome-remote-interface');
+const {SpecReporter} = require('jasmine-spec-reporter');
 const fs = require('fs');
+const resolve = require('path').resolve;
+const logger = require('./tools/helpers/logger');
+const retry = require('protractor-retry').retry;
+const uploadOutput = require('./e2e/e2e-config/utils/upload-output');
 
+require('dotenv').config({path: process.env.ENV_FILE});
+
+const SmartRunner = require('protractor-smartrunner');
 const projectRoot = path.resolve(__dirname);
-const downloadFolder = `${projectRoot}/e2e-downloads`;
-const E2E_HOST = process.env.E2E_HOST || 'http://localhost',
-  E2E_PORT = process.env.E2E_PORT || 4200,
-  BROWSER_RUN = process.env.BROWSER_RUN;
+const downloadFolder = path.join(__dirname, 'e2e-downloads');
+const e2eFolder = path.resolve(projectRoot, 'e2e');
+const E2E_HOST = process.env.E2E_HOST || 'http://localhost:4200';
+const BROWSER_RUN = process.env.BROWSER_RUN;
 const width = 1366;
 const height = 768;
 
-const API_HOST = process.env.API_HOST || 'http://localhost:8080';
+const SAVE_SCREENSHOT = process.env.SAVE_SCREENSHOT === 'true';
+const API_CONTENT_HOST = process.env.API_CONTENT_HOST || 'http://localhost:8080';
+const MAXINSTANCES = process.env.MAXINSTANCES || 1;
+const MAX_RETRIES = process.env.MAX_RETRIES || 1;
 
 function rmDir(dirPath) {
   try {
@@ -33,7 +41,7 @@ function rmDir(dirPath) {
 }
 
 const appConfig = {
-  hostEcm: API_HOST,
+  hostEcm: API_CONTENT_HOST,
   providers: 'ECM',
   authType: 'BASIC'
 };
@@ -45,7 +53,8 @@ exports.config = {
     config: appConfig,
     downloadFolder: downloadFolder,
     ADMIN_USERNAME: process.env.ADMIN_EMAIL || 'admin',
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin'
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin',
+    e2eRootPath: e2eFolder
   },
 
   specs: [
@@ -103,30 +112,45 @@ exports.config = {
   SELENIUM_PROMISE_MANAGER: false,
 
   capabilities: {
+
+    loggingPrefs: {
+      browser: 'ALL' // "OFF", "SEVERE", "WARNING", "INFO", "CONFIG", "FINE", "FINER", "FINEST", "ALL".
+    },
+
     browserName: 'chrome',
+
+    maxInstances: MAXINSTANCES,
+
+    shardTestFiles: true,
+
     chromeOptions: {
-      binary: require('puppeteer').executablePath(),
       prefs: {
-        credentials_enable_service: false,
-        download: {
-          prompt_for_download: false,
-          default_directory: downloadFolder
+        'credentials_enable_service': false,
+        'download': {
+          'prompt_for_download': false,
+          'directory_upgrade': true,
+          'default_directory': downloadFolder
+        },
+        'browser': {
+          'setDownloadBehavior': {
+            'behavior': 'allow',
+            'downloadPath': downloadFolder
+          }
         }
       },
-      args: [
-        '--incognito',
-        ...(BROWSER_RUN === 'true' ? [] : ['--headless']),
-        '--disable-web-security',
-        '--remote-debugging-port=9222',
+      args: ['--incognito',
+        `--window-size=${width},${height}`,
         '--disable-gpu',
-        '--no-sandbox'
-      ]
+        '--no-sandbox',
+        '--disable-web-security',
+        '--disable-browser-side-navigation',
+        ...(BROWSER_RUN === true ? [] : ['--headless'])]
     }
   },
 
   directConnect: true,
 
-  baseUrl: `${E2E_HOST}${E2E_PORT ? `:${E2E_PORT}` : ''}`,
+  baseUrl: E2E_HOST,
 
   getPageTimeout: 50000,
 
@@ -134,65 +158,88 @@ exports.config = {
   jasmineNodeOpts: {
     showColors: true,
     defaultTimeoutInterval: 100000,
-    print: function() {}
+    print: function () {
+    },
+    ...(process.env.CI ? SmartRunner.withOptionalExclusions(resolve(__dirname, './e2e/protractor.excludes.json')) : {})
   },
 
   plugins: [
     {
-      package: 'protractor-screenshoter-plugin',
-      screenshotPath: `${projectRoot}/e2e-output/report`,
-      screenshotOnExpect: 'failure',
-      screenshotOnSpec: 'none',
-      withLogs: true,
-      writeReportFreq: 'end',
-      imageToAscii: 'none',
-      htmlOnExpect: 'none',
-      htmlOnSpec: 'none',
-      clearFoldersBeforeTest: true
+      package: 'jasmine2-protractor-utils',
+      disableScreenshot: false,
+      screenshotOnExpectFailure: true,
+      screenshotOnSpecFailure: false,
+      clearFoldersBeforeTest: true,
+      screenshotPath: path.resolve(__dirname, 'e2e-output/screenshots/')
     }
   ],
 
+  onCleanUp(results) {
+    if (process.env.CI) {
+      retry.onCleanUp(results);
+    }
+  },
+
   onPrepare() {
+    if (process.env.CI) {
+      const repoHash = process.env.GIT_HASH || '';
+      const outputDirectory = process.env.SMART_RUNNER_DIRECTORY;
+      logger.info(`SmartRunner's repoHash: "${repoHash}"`);
+      logger.info(`SmartRunner's outputDirectory: "${outputDirectory}"`);
+      SmartRunner.apply({outputDirectory, repoHash});
+      retry.onPrepare();
+    }
+
+    const tsConfigPath = path.resolve(e2eFolder, 'tsconfig.e2e.json');
+    const tsConfig = require(tsConfigPath);
+
     require('ts-node').register({
-      project: `${projectRoot}/e2e/tsconfig.e2e.json`
+      project: tsConfigPath,
+      compilerOptions: {
+        paths: tsConfig.compilerOptions.paths
+      }
     });
 
-    browser
-      .manage()
-      .window()
-      .setSize(width, height);
+    require('tsconfig-paths').register({
+      project: tsConfigPath,
+      baseUrl: e2eFolder,
+      paths: tsConfig.compilerOptions.paths
+    });
+
+    browser.manage().window().setSize(width, height);
 
     jasmine.getEnv().addReporter(
       new SpecReporter({
         spec: {
-          displayStacktrace: true,
+          displayStacktrace: 'pretty',
           displayDuration: true
         }
       })
     );
 
-    jasmine.getEnv().addReporter(
-      new jasmineReporters.JUnitXmlReporter({
-        consolidateAll: true,
-        savePath: `${projectRoot}/e2e-output/junit-report`,
-        filePrefix: 'results.xml',
-        useDotNotation: false,
-        useFullTestName: false,
-        reportFailedUrl: true
-      })
-    );
-
     rmDir(downloadFolder);
 
-    CDP()
-      .then(client => {
-        client.send('Page.setDownloadBehavior', {
-          behavior: 'allow',
-          downloadPath: downloadFolder
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    browser.driver.sendChromiumCommand('Page.setDownloadBehavior', {
+      behavior: 'allow',
+      downloadPath: downloadFolder
+    });
+  },
+
+  afterLaunch: async function () {
+    if (SAVE_SCREENSHOT) {
+      console.log(`Save screenshot is ${SAVE_SCREENSHOT}, trying to save screenshots.`);
+
+      try {
+        await uploadOutput();
+        console.log('Screenshots saved successfully.');
+      } catch (e) {
+        console.log('Error happened while trying to upload screenshots and test reports: ', e);
+      }
+    } else {
+      console.log(`Save screenshot is ${SAVE_SCREENSHOT}, no need to save screenshots.`);
+    }
+    if (process.env.CI) {
+      return retry.afterLaunch(MAX_RETRIES);
+    }
   }
 };

@@ -23,11 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../../pages/pages';
-import { ContentNodeSelectorDialog } from '../../../components/dialog/content-node-selector-dialog';
-import { RepoClient } from '../../../utilities/repo-client/repo-client';
-import { Utils } from '../../../utilities/utils';
-import { AdminActions } from '../../../utilities/admin-actions';
+import { LoginPage, BrowsingPage, ContentNodeSelectorDialog, RepoClient, Utils, AdminActions } from '@alfresco/aca-testing-shared';
 
 describe('Destination picker dialog : ', () => {
   const random = Utils.random();
@@ -158,7 +154,7 @@ describe('Destination picker dialog : ', () => {
       expect(await dataTable.isItemPresent(fileInDestination)).toBe(false, 'file is displayed');
     });
 
-    it('[C263881] Folder links are not displayed', async() => {
+    it('[C263881] Folder links are not displayed', async () => {
       await dialog.selectLocation('Personal Files');
       await dataTable.doubleClickOnRowByName(destination);
 
@@ -168,7 +164,7 @@ describe('Destination picker dialog : ', () => {
     });
 
     it('[C263885] User can see his Libraries', async () => {
-      await dialog.selectLocation('File Libraries');
+      await dialog.selectLocation('My Libraries');
       expect(await dataTable.isItemPresent(site)).toBe(true, 'user site is not displayed');
     });
 
@@ -220,8 +216,8 @@ describe('Destination picker dialog : ', () => {
     });
 
     it('[C263891] File Libraries breadcrumb - main node', async () => {
-      await dialog.selectLocation('File Libraries');
-      expect(await breadcrumb.currentFolder.getText()).toEqual('File Libraries');
+      await dialog.selectLocation('My Libraries');
+      expect(await breadcrumb.currentFolder.getText()).toEqual('My Libraries');
     });
 
     it('[C263899] Search results breadcrumb', async () => {
@@ -251,7 +247,7 @@ describe('Destination picker dialog : ', () => {
     });
 
     it('[C263898] File Libraries breadcrumb - folder structure', async () => {
-      await dialog.selectLocation('File Libraries');
+      await dialog.selectLocation('My Libraries');
 
       await dataTable.doubleClickOnRowByName(site);
       expect(await breadcrumb.currentFolder.getText()).toEqual(site);
@@ -269,7 +265,7 @@ describe('Destination picker dialog : ', () => {
       expect(await breadcrumb.currentFolder.getText()).toEqual(searchSubFolder2);
 
       await breadcrumb.openPath();
-      expect(await breadcrumb.getPathItems()).toEqual([searchSubFolder1, searchFolder, site, 'File Libraries']);
+      expect(await breadcrumb.getPathItems()).toEqual([searchSubFolder1, searchFolder, site, 'My Libraries']);
     });
 
     it('[C263895] Select a node from the breadcrumb path', async () => {
@@ -287,14 +283,13 @@ describe('Destination picker dialog : ', () => {
   });
 
   describe('Users with different permissions', () => {
-
     it('[C263876] Consumer user cannot select the folder as destination', async () => {
       await loginPage.loginWith(consumer);
       await page.dataTable.selectItem(file);
       await page.toolbar.clickMoreActionsCopy();
       await dialog.waitForDialogToOpen();
 
-      await dialog.selectLocation('File Libraries');
+      await dialog.selectLocation('My Libraries');
       await dataTable.doubleClickOnRowByName(site);
       await dataTable.doubleClickOnRowByName('documentLibrary');
       await dataTable.selectItem(searchFolder);
@@ -308,7 +303,7 @@ describe('Destination picker dialog : ', () => {
       await page.toolbar.clickMoreActionsCopy();
       await dialog.waitForDialogToOpen();
 
-      await dialog.selectLocation('File Libraries');
+      await dialog.selectLocation('My Libraries');
       await dataTable.doubleClickOnRowByName(site);
       await dataTable.doubleClickOnRowByName('documentLibrary');
       await dataTable.selectItem(searchFolder);
@@ -322,7 +317,7 @@ describe('Destination picker dialog : ', () => {
       await page.toolbar.clickMoreActionsCopy();
       await dialog.waitForDialogToOpen();
 
-      await dialog.selectLocation('File Libraries');
+      await dialog.selectLocation('My Libraries');
       await dataTable.doubleClickOnRowByName(site);
       await dataTable.doubleClickOnRowByName('documentLibrary');
       await dataTable.selectItem(searchFolder);

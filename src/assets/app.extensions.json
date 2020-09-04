@@ -46,6 +46,14 @@
         { "type": "rule", "value": "app.navigation.isNotSearchResults" },
         { "type": "rule", "value": "app.navigation.isNotFavorites" }
       ]
+    },
+    {
+      "id": "app.toolbar.favorite.canEditMetadata",
+      "type": "core.every",
+      "parameters": [
+        { "type": "rule", "value": "app.selection.library" },
+        { "type": "rule", "value": "isLibraryManager" }
+      ]
     }
   ],
 
@@ -345,7 +353,7 @@
         "order": 800,
         "component": "app.toolbar.toggleInfoDrawer",
         "rules": {
-          "visible": "app.selection.library"
+          "visible": "app.toolbar.favorite.canEditMetadata"
         }
       },
       {
@@ -1007,45 +1015,47 @@
         }
       ]
     },
-    "sidebar": [
-      {
-        "id": "app.sidebar.properties",
-        "order": 100,
-        "title": "APP.INFO_DRAWER.TABS.PROPERTIES",
-        "component": "app.components.tabs.metadata",
-        "rules": {
-          "visible": "app.navigation.isNotLibraries"
+    "sidebar": {
+      "tabs": [
+        {
+          "id": "app.sidebar.properties",
+          "order": 100,
+          "title": "APP.INFO_DRAWER.TABS.PROPERTIES",
+          "component": "app.components.tabs.metadata",
+          "rules": {
+            "visible": "app.navigation.isNotLibraries"
+          }
+        },
+        {
+          "id": "app.sidebar.comments",
+          "order": 200,
+          "title": "APP.INFO_DRAWER.TABS.COMMENTS",
+          "component": "app.components.tabs.comments",
+          "rules": {
+            "visible": "app.navigation.isNotLibraries"
+          }
+        },
+        {
+          "id": "app.sidebar.versions",
+          "order": 300,
+          "disabled": true,
+          "title": "APP.INFO_DRAWER.TABS.VERSIONS",
+          "component": "app.components.tabs.versions",
+          "rules": {
+            "visible": "app.navigation.isNotLibraries"
+          }
+        },
+        {
+          "id": "app.sidebar.library.properties",
+          "order": 500,
+          "title": "APP.INFO_DRAWER.TABS.PROPERTIES",
+          "component": "app.components.tabs.library.metadata",
+          "rules": {
+            "visible": "app.toolbar.favorite.canEditMetadata"
+          }
         }
-      },
-      {
-        "id": "app.sidebar.comments",
-        "order": 200,
-        "title": "APP.INFO_DRAWER.TABS.COMMENTS",
-        "component": "app.components.tabs.comments",
-        "rules": {
-          "visible": "app.navigation.isNotLibraries"
-        }
-      },
-      {
-        "id": "app.sidebar.versions",
-        "order": 300,
-        "disabled": true,
-        "title": "APP.INFO_DRAWER.TABS.VERSIONS",
-        "component": "app.components.tabs.versions",
-        "rules": {
-          "visible": "app.navigation.isNotLibraries"
-        }
-      },
-      {
-        "id": "app.sidebar.library.properties",
-        "order": 500,
-        "title": "APP.INFO_DRAWER.TABS.LIBRARY_PROPERTIES",
-        "component": "app.components.tabs.library.metadata",
-        "rules": {
-          "visible": "app.selection.library"
-        }
-      }
-    ],
+      ]
+    },
     "content-metadata-presets": [
       {
         "id": "app.content.metadata.custom",
@@ -1139,6 +1149,7 @@
         {
           "id": "app.files.size",
           "key": "content.sizeInBytes",
+          "sortingKey": "sizeInBytes",
           "title": "APP.DOCUMENT_LIST.COLUMNS.SIZE",
           "type": "fileSize",
           "class": "adf-no-grow-cell adf-ellipsis-cell",
@@ -1158,6 +1169,7 @@
         {
           "id": "app.files.modifiedBy",
           "key": "modifiedByUser.displayName",
+          "sortingKey": "modifiedByUser",
           "title": "APP.DOCUMENT_LIST.COLUMNS.MODIFIED_BY",
           "type": "text",
           "class": "adf-ellipsis-cell adf-no-grow-cell",
@@ -1176,12 +1188,22 @@
         {
           "id": "app.libraries.name",
           "key": "title",
+          "sortingKey": "name",
           "title": "APP.DOCUMENT_LIST.COLUMNS.NAME",
           "type": "text",
-          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "class": "adf-ellipsis-cell adf-expand-cell-3",
           "sortable": true,
           "template": "app.columns.libraryName",
           "desktopOnly": false
+        },
+        {
+          "id": "app.libraries.description",
+          "key": "description",
+          "title": "APP.DOCUMENT_LIST.COLUMNS.DESCRIPTION",
+          "type": "text",
+          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "sortable": true,
+          "desktopOnly": true
         },
         {
           "id": "app.libraries.role",
@@ -1215,12 +1237,22 @@
         {
           "id": "app.favorite.libraries.name",
           "key": "title",
+          "sortingKey": "name",
           "title": "APP.DOCUMENT_LIST.COLUMNS.NAME",
           "type": "text",
-          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "class": "adf-ellipsis-cell adf-expand-cell-3",
           "sortable": true,
           "template": "app.columns.libraryName",
           "desktopOnly": false
+        },
+        {
+          "id": "app.favorite.libraries.description",
+          "key": "description",
+          "title": "APP.DOCUMENT_LIST.COLUMNS.DESCRIPTION",
+          "type": "text",
+          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "sortable": true,
+          "desktopOnly": true
         },
         {
           "id": "app.favorite.libraries.role",
@@ -1264,6 +1296,7 @@
         {
           "id": "app.shared.location",
           "key": "path.name",
+          "sortingKey": "path",
           "title": "APP.DOCUMENT_LIST.COLUMNS.LOCATION",
           "type": "text",
           "class": "adf-ellipsis-cell adf-no-grow-cell",
@@ -1274,6 +1307,7 @@
         {
           "id": "app.shared.size",
           "key": "content.sizeInBytes",
+          "sortingKey": "sizeInBytes",
           "title": "APP.DOCUMENT_LIST.COLUMNS.SIZE",
           "type": "fileSize",
           "class": "adf-no-grow-cell adf-ellipsis-cell",
@@ -1283,6 +1317,7 @@
         {
           "id": "app.shared.modifiedOn",
           "key": "modifiedAt",
+          "sortingKey": "modifiedAt",
           "title": "APP.DOCUMENT_LIST.COLUMNS.MODIFIED_ON",
           "type": "date",
           "class": "adf-ellipsis-cell",
@@ -1293,6 +1328,7 @@
         {
           "id": "app.shared.modifiedBy",
           "key": "modifiedByUser.displayName",
+          "sortingKey": "modifiedByUser",
           "title": "APP.DOCUMENT_LIST.COLUMNS.MODIFIED_BY",
           "type": "text",
           "class": "adf-ellipsis-cell adf-no-grow-cell",
@@ -1302,6 +1338,7 @@
         {
           "id": "app.shared.sharedBy",
           "key": "sharedByUser.displayName",
+          "sortingKey": "sharedByUser",
           "title": "APP.DOCUMENT_LIST.COLUMNS.SHARED_BY",
           "type": "text",
           "class": "adf-ellipsis-cell adf-no-grow-cell",
@@ -1340,6 +1377,7 @@
         {
           "id": "app.recent.size",
           "key": "content.sizeInBytes",
+          "sortingKey": "sizeInBytes",
           "title": "APP.DOCUMENT_LIST.COLUMNS.SIZE",
           "type": "fileSize",
           "class": "adf-no-grow-cell adf-ellipsis-cell",
@@ -1407,6 +1445,7 @@
         {
           "id": "app.favorites.modifiedBy",
           "key": "modifiedByUser.displayName",
+          "sortingKey": "modifiedByUser",
           "title": "APP.DOCUMENT_LIST.COLUMNS.MODIFIED_BY",
           "type": "text",
           "class": "adf-ellipsis-cell adf-no-grow-cell",
@@ -1445,6 +1484,7 @@
         {
           "id": "app.trashcan.size",
           "key": "content.sizeInBytes",
+          "sortingKey": "sizeInBytes",
           "title": "APP.DOCUMENT_LIST.COLUMNS.SIZE",
           "type": "fileSize",
           "class": "adf-no-grow-cell adf-ellipsis-cell",
@@ -1473,12 +1513,23 @@
         {
           "id": "app.libraries.name",
           "key": "title",
+          "sortingKey": "name",
           "title": "APP.DOCUMENT_LIST.COLUMNS.NAME",
           "type": "text",
-          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "class": "adf-ellipsis-cell adf-expand-cell-3",
           "sortable": true,
           "template": "app.columns.libraryName",
           "desktopOnly": false
+        },
+        {
+          "id": "app.favorite.libraries.description",
+          "key": "description",
+          "title": "APP.DOCUMENT_LIST.COLUMNS.DESCRIPTION",
+          "type": "text",
+          "class": "adf-ellipsis-cell adf-expand-cell-5",
+          "sortable": true,
+          "template": "app.columns.libraryDescription",
+          "desktopOnly": true
         },
         {
           "id": "app.libraries.role",

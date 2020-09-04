@@ -27,17 +27,15 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { SiteEntry, FavoritePaging, Pagination } from '@alfresco/js-api';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { ContentManagementService } from '../../services/content-management.service';
-import { ContentApiService } from '@alfresco/aca-shared';
+import { AppExtensionService, ContentApiService } from '@alfresco/aca-shared';
 import { NavigateLibraryAction } from '@alfresco/aca-shared/store';
 import { PageComponent } from '../page.component';
 import { UserPreferencesService } from '@alfresco/adf-core';
 @Component({
   templateUrl: './favorite-libraries.component.html'
 })
-export class FavoriteLibrariesComponent extends PageComponent
-  implements OnInit {
+export class FavoriteLibrariesComponent extends PageComponent implements OnInit {
   pagination: Pagination = new Pagination({
     skipCount: 0,
     maxItems: 25,
@@ -72,18 +70,16 @@ export class FavoriteLibrariesComponent extends PageComponent
       this.content.libraryLeft.subscribe(() => this.reloadList()),
       this.content.favoriteLibraryToggle.subscribe(() => this.reloadList()),
 
-      this.breakpointObserver
-        .observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape])
-        .subscribe(result => {
-          this.isSmallScreen = result.matches;
-        })
+      this.breakpointObserver.observe([Breakpoints.HandsetPortrait, Breakpoints.HandsetLandscape]).subscribe((result) => {
+        this.isSmallScreen = result.matches;
+      })
     ]);
     this.columns = this.extensions.documentListPresets.favoriteLibraries || [];
   }
 
   navigateTo(node: SiteEntry) {
     if (node && node.entry && node.entry.guid) {
-      this.store.dispatch(new NavigateLibraryAction(node.entry.guid));
+      this.store.dispatch(new NavigateLibraryAction(node.entry.guid, 'favorite/libraries'));
     }
   }
 

@@ -59,20 +59,14 @@ describe('NodeEffects', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        AppTestingModule,
-        SharedStoreModule,
-        EffectsModule.forRoot([NodeEffects, ViewerEffects])
-      ],
-      declarations: [],
+      imports: [AppTestingModule, SharedStoreModule, EffectsModule.forRoot([NodeEffects, ViewerEffects])],
       providers: [ViewUtilService]
     });
 
-    // actions$ = TestBed.get(Actions);
-    store = TestBed.get(Store);
-    contentService = TestBed.get(ContentManagementService);
-    viewUtilService = TestBed.get(ViewUtilService);
-    viewerEffects = TestBed.get(ViewerEffects);
+    store = TestBed.inject(Store);
+    contentService = TestBed.inject(ContentManagementService);
+    viewUtilService = TestBed.inject(ViewUtilService);
+    viewerEffects = TestBed.inject(ViewerEffects);
   });
 
   describe('shareNode$', () => {
@@ -250,9 +244,11 @@ describe('NodeEffects', () => {
   });
 
   describe('createFolder$', () => {
-    it('should create folder from the payload', () => {
+    beforeEach(() => {
       spyOn(contentService, 'createFolder').and.stub();
+    });
 
+    it('should create folder from the payload', () => {
       const currentFolder = 'folder1';
       store.dispatch(new CreateFolderAction(currentFolder));
 
@@ -260,26 +256,14 @@ describe('NodeEffects', () => {
     });
 
     it('should create folder in the active selected one', fakeAsync(() => {
-      spyOn(contentService, 'createFolder').and.stub();
-
       const currentFolder: any = { isFolder: true, id: 'folder1' };
       store.dispatch(new SetCurrentFolderAction(currentFolder));
 
       tick(100);
 
       store.dispatch(new CreateFolderAction(null));
-      expect(contentService.createFolder).toHaveBeenCalledWith(
-        currentFolder.id
-      );
+      expect(contentService.createFolder).toHaveBeenCalledWith(currentFolder.id);
     }));
-
-    it('should do nothing if invoking delete with no data', () => {
-      spyOn(contentService, 'createFolder').and.stub();
-
-      store.dispatch(new CreateFolderAction(null));
-
-      expect(contentService.createFolder).not.toHaveBeenCalled();
-    });
   });
 
   describe('editFolder$', () => {
@@ -420,10 +404,7 @@ describe('NodeEffects', () => {
 
       store.dispatch(new PrintFileAction(node));
 
-      expect(viewUtilService.printFileGeneric).toHaveBeenCalledWith(
-        'node-id',
-        'text/json'
-      );
+      expect(viewUtilService.printFileGeneric).toHaveBeenCalledWith('node-id', 'text/json');
     });
 
     it('it should print node content from store', fakeAsync(() => {
@@ -442,10 +423,7 @@ describe('NodeEffects', () => {
 
       store.dispatch(new PrintFileAction(null));
 
-      expect(viewUtilService.printFileGeneric).toHaveBeenCalledWith(
-        'node-id',
-        'text/json'
-      );
+      expect(viewUtilService.printFileGeneric).toHaveBeenCalledWith('node-id', 'text/json');
     }));
   });
 

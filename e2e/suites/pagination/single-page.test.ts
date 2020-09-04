@@ -23,10 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage, SearchResultsPage } from '../../pages/pages';
-import { Utils } from '../../utilities/utils';
-import { AdminActions } from '../../utilities/admin-actions';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
+import { LoginPage, BrowsingPage, SearchResultsPage, Utils, AdminActions, RepoClient } from '@alfresco/aca-testing-shared';
 
 describe('Pagination on single page', () => {
   const random = Utils.random();
@@ -72,11 +69,7 @@ describe('Pagination on single page', () => {
   });
 
   afterAll(async () => {
-    await Promise.all([
-      userApi.nodes.deleteNodeById(fileId),
-      userApi.sites.deleteSite(siteId),
-      userApi.trashcan.emptyTrash()
-    ]);
+    await Promise.all([userApi.nodes.deleteNodeById(fileId), userApi.sites.deleteSite(siteId), userApi.trashcan.emptyTrash()]);
   });
 
   it('[C280112] page selector not displayed on Favorites', async () => {
@@ -120,5 +113,4 @@ describe('Pagination on single page', () => {
     await searchResultsPage.waitForResults();
     expect(await pagination.isPagesButtonPresent()).toBe(false, 'page selector displayed');
   });
-
 });

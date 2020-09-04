@@ -29,34 +29,9 @@ import { EffectsModule } from '@ngrx/effects';
 import { UploadEffects } from './upload.effects';
 import { AppTestingModule } from '../../testing/app-testing.module';
 import { NgZone } from '@angular/core';
-import {
-  UploadService,
-  FileUploadCompleteEvent,
-  FileModel
-} from '@alfresco/adf-core';
-import { MinimalNodeEntryEntity } from '@alfresco/js-api';
-import {
-  UnlockWriteAction,
-  SnackbarErrorAction
-} from '@alfresco/aca-shared/store';
+import { UploadService, FileUploadCompleteEvent, FileModel } from '@alfresco/adf-core';
+import { UnlockWriteAction, UploadFileVersionAction } from '@alfresco/aca-shared/store';
 import { ContentManagementService } from '../../services/content-management.service';
-import { of, throwError } from 'rxjs';
-import { MatDialogRef } from '@angular/material';
-import { NodeVersionUploadDialogComponent } from '../../dialogs/node-version-upload/node-version-upload.dialog';
-
-function createFileList(fileName, type = 'text/plain') {
-  const data = new Blob([''], { type });
-  const arrayOfBlob = new Array<Blob>();
-  arrayOfBlob.push(data);
-  const file = new File(arrayOfBlob, fileName);
-  const files = [file];
-
-  const reducer = (dataTransfer, currentFile) => {
-    dataTransfer.items.add(currentFile);
-    return dataTransfer;
-  };
-  return files.reduce(reducer, new DataTransfer()).files;
-}
 
 describe('UploadEffects', () => {
   let store: Store<any>;
@@ -64,30 +39,26 @@ describe('UploadEffects', () => {
   let effects: UploadEffects;
   let zone: NgZone;
   let contentManagementService: ContentManagementService;
-  let uploadVersionInput: HTMLInputElement;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AppTestingModule, EffectsModule.forRoot([UploadEffects])]
     });
 
-    zone = TestBed.get(NgZone);
+    zone = TestBed.inject(NgZone);
     spyOn(zone, 'run').and.callFake((fn: () => any) => {
       return fn();
     });
 
-    contentManagementService = TestBed.get(ContentManagementService);
-    store = TestBed.get(Store);
-    uploadService = TestBed.get(UploadService);
-    effects = TestBed.get(UploadEffects);
+    contentManagementService = TestBed.inject(ContentManagementService);
+    store = TestBed.inject(Store);
+    uploadService = TestBed.inject(UploadService);
+    effects = TestBed.inject(UploadEffects);
   });
 
   beforeEach(() => {
-    uploadVersionInput = document.querySelector('#app-upload-file-version');
-  });
-
-  afterEach(() => {
-    uploadVersionInput.remove();
+    spyOn(effects['fileVersionInput'], 'click');
+    spyOn(effects, 'uploadVersion').and.callThrough();
   });
 
   describe('uploadAndUnlock()', () => {
@@ -109,11 +80,7 @@ describe('UploadEffects', () => {
     });
 
     it('should dispatch the unlock write action for a locked file', () => {
-      const file: FileModel = new FileModel(
-        { name: 'file1.png', size: 10 } as File,
-        null,
-        'file1'
-      );
+      const file: FileModel = new FileModel({ name: 'file1.png', size: 10 } as File, null, 'file1');
 
       file.data = {
         entry: {
@@ -129,21 +96,13 @@ describe('UploadEffects', () => {
       spyOn(store, 'dispatch').and.stub();
 
       effects.uploadAndUnlock(file);
-      uploadService.fileUploadComplete.next(
-        new FileUploadCompleteEvent(file, 100, file.data)
-      );
+      uploadService.fileUploadComplete.next(new FileUploadCompleteEvent(file, 100, file.data));
 
-      expect(store.dispatch).toHaveBeenCalledWith(
-        new UnlockWriteAction(file.data)
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(new UnlockWriteAction(file.data));
     });
 
     it('should dispatch only one unlock action for a locked file', () => {
-      const file: FileModel = new FileModel(
-        { name: 'file1.png', size: 10 } as File,
-        null,
-        'file1'
-      );
+      const file: FileModel = new FileModel({ name: 'file1.png', size: 10 } as File, null, 'file1');
 
       file.data = {
         entry: {
@@ -165,19 +124,13 @@ describe('UploadEffects', () => {
       uploadService.fileUploadComplete.next(completeEvent);
       uploadService.fileUploadComplete.next(completeEvent);
 
-      expect(store.dispatch).toHaveBeenCalledWith(
-        new UnlockWriteAction(file.data)
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(new UnlockWriteAction(file.data));
 
       expect(store.dispatch).toHaveBeenCalledTimes(1);
     });
 
     it('should dispatch no actions if file is not locked', () => {
-      const file: FileModel = new FileModel(
-        { name: 'file1.png', size: 10 } as File,
-        null,
-        'file1'
-      );
+      const file: FileModel = new FileModel({ name: 'file1.png', size: 10 } as File, null, 'file1');
 
       file.data = {
         entry: {
@@ -191,50 +144,70 @@ describe('UploadEffects', () => {
       spyOn(store, 'dispatch').and.stub();
 
       effects.uploadAndUnlock(file);
-      uploadService.fileUploadComplete.next(
-        new FileUploadCompleteEvent(file, 100, file.data)
-      );
+      uploadService.fileUploadComplete.next(new FileUploadCompleteEvent(file, 100, file.data));
 
       expect(store.dispatch).not.toHaveBeenCalled();
     });
   });
 
   describe('upload file version', () => {
-    beforeEach(() => {
-      const dialog = { afterClosed: () => of({}) } as MatDialogRef<
-        NodeVersionUploadDialogComponent
-      >;
-      spyOn(contentManagementService, 'versionUploadDialog').and.returnValue(
-        dialog
-      );
-      spyOn(effects, 'uploadAndUnlock').and.stub();
+    it('should trigger upload file from context menu', () => {
+      store.dispatch({ type: 'UPLOAD_FILE_VERSION' });
+      expect(effects['fileVersionInput'].click).toHaveBeenCalled();
     });
 
-    it('should upload file', () => {
-      spyOn(contentManagementService, 'getNodeInfo').and.returnValue(
-        of({
-          id: 'file1',
-          properties: {}
-        } as MinimalNodeEntryEntity)
-      );
-
-      uploadVersionInput.files = createFileList('bogus.txt');
-      uploadVersionInput.dispatchEvent(new CustomEvent('change'));
-      expect(effects.uploadAndUnlock).toHaveBeenCalled();
-    });
-
-    it('should raise error when getNodeInfo fails', () => {
-      spyOn(store, 'dispatch').and.stub();
-      spyOn(contentManagementService, 'getNodeInfo').and.returnValue(
-        throwError('error')
-      );
-
-      uploadVersionInput.files = createFileList('bogus.txt');
-      uploadVersionInput.dispatchEvent(new CustomEvent('change'));
-      expect(store.dispatch).toHaveBeenCalledWith(
-        new SnackbarErrorAction('VERSION.ERROR.GENERIC')
-      );
-      expect(effects.uploadAndUnlock).not.toHaveBeenCalled();
+    it('should upload file from dropping another file', () => {
+      spyOn(contentManagementService, 'versionUpdateDialog');
+      const fakeEvent = new CustomEvent('upload-files', {
+        detail: {
+          files: [
+            {
+              file: new FileModel({
+                name: 'Fake New file',
+                type: 'image/png',
+                lastModified: 1589273450599,
+                size: 1351,
+                slice: null
+              } as File),
+              entry: new FileModel({
+                name: 'Fake New file',
+                type: 'image/png',
+                lastModified: 1589273450599,
+                size: 1351,
+                slice: null
+              } as File)
+            }
+          ],
+          data: {
+            node: {
+              entry: {
+                isFile: true,
+                createdByUser: {
+                  id: 'admin.adf@alfresco.com',
+                  displayName: 'Administrator'
+                },
+                modifiedAt: '2020-06-09T08:13:40.569Z',
+                nodeType: 'cm:content',
+                content: {
+                  mimeType: 'image/jpeg',
+                  mimeTypeName: 'JPEG Image',
+                  sizeInBytes: 175540,
+                  encoding: 'UTF-8'
+                },
+                parentId: 'dff2bc1e-d092-42ac-82d1-87c82f6e56cb',
+                createdAt: '2020-05-14T08:52:03.868Z',
+                isFolder: false,
+                name: 'GoqZhm.jpg',
+                id: '1bf8a8f7-18ac-4eef-919d-61d952eaa179',
+                allowableOperations: ['delete', 'update', 'updatePermissions'],
+                isFavorite: false
+              }
+            }
+          }
+        }
+      });
+      store.dispatch(new UploadFileVersionAction(fakeEvent));
+      expect(contentManagementService.versionUpdateDialog).toHaveBeenCalledWith(fakeEvent.detail.data.node.entry, fakeEvent.detail.files[0].file);
     });
   });
 });

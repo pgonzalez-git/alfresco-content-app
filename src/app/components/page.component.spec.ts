@@ -25,21 +25,16 @@
 
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { PageComponent } from './page.component';
-import {
-  ReloadDocumentListAction,
-  SetSelectedNodesAction,
-  SetInfoDrawerStateAction,
-  AppState,
-  AppStore
-} from '@alfresco/aca-shared/store';
-import { MinimalNodeEntity } from '@alfresco/js-api';
+import { ReloadDocumentListAction, SetSelectedNodesAction, SetInfoDrawerStateAction, AppState, AppStore } from '@alfresco/aca-shared/store';
+import { AppExtensionService } from '@alfresco/aca-shared';
+import { MinimalNodeEntity, NodePaging } from '@alfresco/js-api';
 import { ContentManagementService } from '../services/content-management.service';
 import { EffectsModule } from '@ngrx/effects';
 import { ViewerEffects } from '../store/effects';
 import { Store } from '@ngrx/store';
-import { AppExtensionService } from '../extensions/extension.service';
 import { AppTestingModule } from '../testing/app-testing.module';
 import { Component } from '@angular/core';
+import { DocumentListComponent } from '@alfresco/adf-content-services';
 
 @Component({
   selector: 'aca-test',
@@ -48,11 +43,7 @@ import { Component } from '@angular/core';
 class TestComponent extends PageComponent {
   node: any;
 
-  constructor(
-    store: Store<AppStore>,
-    extensions: AppExtensionService,
-    content: ContentManagementService
-  ) {
+  constructor(store: Store<AppStore>, extensions: AppExtensionService, content: ContentManagementService) {
     super(store, extensions, content);
   }
 }
@@ -69,7 +60,7 @@ describe('PageComponent', () => {
       providers: [ContentManagementService, AppExtensionService]
     });
 
-    store = TestBed.get(Store);
+    store = TestBed.inject(Store);
     fixture = TestBed.createComponent(TestComponent);
     component = fixture.componentInstance;
   });
@@ -95,12 +86,12 @@ describe('PageComponent', () => {
       window.history.pushState({}, null, locationHref);
     });
 
-    it('should open info drawer on action event', done => {
+    it('should open info drawer on action event', (done) => {
       window.history.pushState({}, null, `${locationHref}#test`);
       fixture.detectChanges();
 
       fixture.whenStable().then(() => {
-        component.infoDrawerOpened$.subscribe(state => {
+        component.infoDrawerOpened$.subscribe((state) => {
           expect(state).toBe(true);
           done();
         });
@@ -109,12 +100,12 @@ describe('PageComponent', () => {
       store.dispatch(new SetInfoDrawerStateAction(true));
     });
 
-    it('should not open info drawer if viewer outlet is active', done => {
+    it('should not open info drawer if viewer outlet is active', (done) => {
       window.history.pushState({}, null, `${locationHref}#test(viewer:view)`);
       fixture.detectChanges();
 
       fixture.whenStable().then(() => {
-        component.infoDrawerOpened$.subscribe(state => {
+        component.infoDrawerOpened$.subscribe((state) => {
           expect(state).toBe(false);
           done();
         });
@@ -143,9 +134,7 @@ describe('PageComponent', () => {
       spyOn(store, 'dispatch');
 
       component.reload();
-      expect(store.dispatch).toHaveBeenCalledWith(
-        new ReloadDocumentListAction()
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(new ReloadDocumentListAction());
     });
 
     it('should set selection after reload if node is passed', () => {
@@ -157,9 +146,52 @@ describe('PageComponent', () => {
       spyOn(store, 'dispatch');
 
       component.reload(node);
-      expect(store.dispatch['calls'].mostRecent().args[0]).toEqual(
-        new SetSelectedNodesAction([node])
-      );
+      expect(store.dispatch['calls'].mostRecent().args[0]).toEqual(new SetSelectedNodesAction([node]));
+    });
+
+    it('should update source on onFilterUpdate event', () => {
+      const nodePaging = {
+        list: {
+          pagination: {},
+          entries: [{ entry: { id: 'new-node-id' } }]
+        }
+      } as NodePaging;
+
+      component.onFilterUpdate(nodePaging);
+      expect(component.nodeResult).toEqual(nodePaging);
+    });
+
+    it('should clear results onAllFilterCleared event', () => {
+      component.documentList = {
+        node: {
+          list: {
+            pagination: {},
+            entries: [{ entry: { id: 'new-node-id' } }]
+          }
+        } as NodePaging
+      } as DocumentListComponent;
+      spyOn(store, 'dispatch');
+
+      component.onAllFilterCleared();
+      expect(component.documentList.node).toBe(null);
+      expect(store.dispatch['calls'].mostRecent().args[0]).toEqual(new ReloadDocumentListAction());
+    });
+
+    it('should call onAllFilterCleared event if page is viewer outlet', () => {
+      window.history.pushState({}, null, `${locationHref}#test(viewer:view)`);
+      const nodePaging = {
+        list: {
+          pagination: {},
+          entries: [{ entry: { id: 'new-node-id' } }]
+        }
+      } as NodePaging;
+
+      component.documentList = { node: nodePaging } as DocumentListComponent;
+      spyOn(store, 'dispatch');
+
+      component.onAllFilterCleared();
+      expect(component.documentList.node).toEqual(nodePaging);
+      expect(store.dispatch).not.toHaveBeenCalled();
     });
   });
 });

@@ -38,14 +38,12 @@ import {
   SetInfoDrawerStateAction,
   SetInfoDrawerMetadataAspectAction,
   SetSettingsParameterAction,
-  SetHeaderColorAction
+  SetHeaderColorAction,
+  SetCurrentNodeVersionAction
 } from '@alfresco/aca-shared/store';
 import { INITIAL_APP_STATE } from '../initial-state';
 
-export function appReducer(
-  state: AppState = INITIAL_APP_STATE,
-  action: Action
-): AppState {
+export function appReducer(state: AppState = INITIAL_APP_STATE, action: Action): AppState {
   let newState: AppState;
 
   switch (action.type) {
@@ -53,10 +51,7 @@ export function appReducer(
       newState = Object.assign({}, (action as SetInitialStateAction).payload);
       break;
     case AppActionTypes.SetSettingsParameter:
-      newState = handleSettingsUpdate(
-        state,
-        action as SetSettingsParameterAction
-      );
+      newState = handleSettingsUpdate(state, action as SetSettingsParameterAction);
       break;
     case AppActionTypes.SetHeaderColor:
       newState = {
@@ -73,6 +68,9 @@ export function appReducer(
     case AppActionTypes.SetCurrentFolder:
       newState = updateCurrentFolder(state, action as SetCurrentFolderAction);
       break;
+    case AppActionTypes.SetCurrentVersion:
+      newState = updateCurrentNodeVersion(state, action as SetCurrentNodeVersionAction);
+      break;
     case AppActionTypes.SetCurrentUrl:
       newState = updateCurrentUrl(state, action as SetCurrentUrlAction);
       break;
@@ -83,19 +81,13 @@ export function appReducer(
       newState = setInfoDrawer(state, action as SetInfoDrawerStateAction);
       break;
     case AppActionTypes.SetInfoDrawerMetadataAspect:
-      newState = setInfoDrawerAspect(
-        state,
-        action as SetInfoDrawerMetadataAspectAction
-      );
+      newState = setInfoDrawerAspect(state, action as SetInfoDrawerMetadataAspectAction);
       break;
     case AppActionTypes.ToggleDocumentDisplayMode:
       newState = toggleDocumentDisplayMode(state);
       break;
     case AppActionTypes.SetRepositoryInfo:
-      newState = updateRepositoryStatus(
-        state,
-        action as SetRepositoryInfoAction
-      );
+      newState = updateRepositoryStatus(state, action as SetRepositoryInfoAction);
       break;
     case SearchActionTypes.ToggleFilter:
       newState = toggleSearchFilter(state);
@@ -107,32 +99,35 @@ export function appReducer(
       newState = hideSearchFilter(state);
       break;
     default:
-      newState = Object.assign({}, state);
+      newState = { ...state };
   }
 
   return newState;
 }
 
 function toggleSearchFilter(state: AppState): AppState {
-  const newState = Object.assign({}, state);
-  newState.showFacetFilter = !newState.showFacetFilter;
-  return newState;
+  return {
+    ...state,
+    showFacetFilter: !state.showFacetFilter
+  };
 }
 
 function hideSearchFilter(state: AppState): AppState {
-  const newState = Object.assign({}, state);
-  newState.showFacetFilter = false;
-  return newState;
+  return {
+    ...state,
+    showFacetFilter: false
+  };
 }
 
 function showSearchFilter(state: AppState): AppState {
-  const newState = Object.assign({}, state);
-  newState.showFacetFilter = true;
-  return newState;
+  return {
+    ...state,
+    showFacetFilter: true
+  };
 }
 
 function updateUser(state: AppState, action: SetUserProfileAction): AppState {
-  const newState = Object.assign({}, state);
+  const newState = { ...state };
   const user = action.payload.person;
   const groups = [...(action.payload.groups || [])];
 
@@ -159,19 +154,25 @@ function updateUser(state: AppState, action: SetUserProfileAction): AppState {
 }
 
 function updateCurrentFolder(state: AppState, action: SetCurrentFolderAction) {
-  const newState = Object.assign({}, state);
+  const newState = { ...state };
   newState.navigation.currentFolder = action.payload;
   return newState;
 }
 
+function updateCurrentNodeVersion(state: AppState, action: SetCurrentNodeVersionAction) {
+  const newState = { ...state };
+  newState.currentNodeVersion = action.payload;
+  return newState;
+}
+
 function updateCurrentUrl(state: AppState, action: SetCurrentUrlAction) {
-  const newState = Object.assign({}, state);
+  const newState = { ...state };
   newState.navigation.url = action.payload;
   return newState;
 }
 
 function toggleInfoDrawer(state: AppState) {
-  const newState = Object.assign({}, state);
+  const newState = { ...state };
 
   let value = state.infoDrawerOpened;
   if (state.selection.isEmpty) {
@@ -186,17 +187,14 @@ function toggleInfoDrawer(state: AppState) {
 }
 
 function toggleDocumentDisplayMode(state: AppState) {
-  const newState = Object.assign({}, state);
-  newState.documentDisplayMode =
-    newState.documentDisplayMode === 'list' ? 'gallery' : 'list';
-  return newState;
+  return {
+    ...state,
+    documentDisplayMode: state.documentDisplayMode === 'list' ? 'gallery' : 'list'
+  };
 }
 
-function updateSelectedNodes(
-  state: AppState,
-  action: SetSelectedNodesAction
-): AppState {
-  const newState = Object.assign({}, state);
+function updateSelectedNodes(state: AppState, action: SetSelectedNodesAction): AppState {
+  const newState = { ...state };
   const nodes = [...action.payload];
   const count = nodes.length;
   const isEmpty = nodes.length === 0;
@@ -214,21 +212,15 @@ function updateSelectedNodes(
     if (nodes.length === 1) {
       file = nodes.find((entity: any) => {
         // workaround Shared
-        return entity.entry.isFile ||
-          entity.entry.nodeId ||
-          entity.entry.sharedByUser
-          ? true
-          : false;
+        return entity.entry.isFile || entity.entry.nodeId || entity.entry.sharedByUser ? true : false;
       });
       folder = nodes.find((entity: any) => entity.entry.isFolder);
     }
   }
 
-  const libraries: any[] = [...action.payload].filter(
-    (node: any) => node.isLibrary
-  );
+  const libraries: any[] = [...action.payload].filter((node: any) => node.isLibrary);
   if (libraries.length === 1) {
-    library = libraries[0];
+    library = libraries[0] as any;
   }
 
   if (isEmpty) {
@@ -250,33 +242,26 @@ function updateSelectedNodes(
 }
 
 function setInfoDrawer(state: AppState, action: SetInfoDrawerStateAction) {
-  const newState = Object.assign({}, state);
-  newState.infoDrawerOpened = action.payload;
-  return newState;
+  return {
+    ...state,
+    infoDrawerOpened: action.payload
+  };
 }
 
-function setInfoDrawerAspect(
-  state: AppState,
-  action: SetInfoDrawerMetadataAspectAction
-) {
-  const newState = Object.assign({}, state);
-  newState.infoDrawerMetadataAspect = action.payload;
-  return newState;
+function setInfoDrawerAspect(state: AppState, action: SetInfoDrawerMetadataAspectAction) {
+  return {
+    ...state,
+    infoDrawerMetadataAspect: action.payload
+  };
 }
 
-function updateRepositoryStatus(
-  state: AppState,
-  action: SetRepositoryInfoAction
-) {
-  const newState = Object.assign({}, state);
+function updateRepositoryStatus(state: AppState, action: SetRepositoryInfoAction) {
+  const newState = { ...state };
   newState.repository = action.payload;
   return newState;
 }
 
-function handleSettingsUpdate(
-  state: AppState,
-  action: SetSettingsParameterAction
-): AppState {
+function handleSettingsUpdate(state: AppState, action: SetSettingsParameterAction): AppState {
   const newState = { ...state };
   const { payload } = action;
 

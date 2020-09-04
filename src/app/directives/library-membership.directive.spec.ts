@@ -24,18 +24,13 @@
  */
 
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import {
-  AlfrescoApiService,
-  AlfrescoApiServiceMock,
-  AppConfigService,
-  CoreModule,
-  StorageService
-} from '@alfresco/adf-core';
+import { AlfrescoApiService, AlfrescoApiServiceMock, AppConfigService, CoreModule, StorageService } from '@alfresco/adf-core';
 import { AppTestingModule } from '../testing/app-testing.module';
 import { DirectivesModule } from './directives.module';
 import { LibraryMembershipDirective } from './library-membership.directive';
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { throwError } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('LibraryMembershipDirective', () => {
   let alfrescoApiService: AlfrescoApiService;
@@ -59,25 +54,17 @@ describe('LibraryMembershipDirective', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [AppTestingModule, DirectivesModule, CoreModule.forRoot()],
+      imports: [TranslateModule.forRoot(), AppTestingModule, DirectivesModule, CoreModule.forRoot()],
       schemas: [NO_ERRORS_SCHEMA]
     });
-    alfrescoApiService = new AlfrescoApiServiceMock(
-      new AppConfigService(null),
-      new StorageService()
-    );
+    alfrescoApiService = new AlfrescoApiServiceMock(new AppConfigService(null), new StorageService());
     peopleApi = alfrescoApiService.getInstance().core.peopleApi;
     directive = new LibraryMembershipDirective(alfrescoApiService);
   });
 
   describe('markMembershipRequest', () => {
     beforeEach(() => {
-      getMembershipSpy = spyOn(
-        peopleApi,
-        'getSiteMembershipRequest'
-      ).and.returnValue(
-        Promise.resolve({ entry: requestedMembershipResponse })
-      );
+      getMembershipSpy = spyOn(peopleApi, 'getSiteMembershipRequest').and.returnValue(Promise.resolve({ entry: requestedMembershipResponse }));
     });
 
     it('should not check membership requests if no entry is selected', fakeAsync(() => {
@@ -117,22 +104,9 @@ describe('LibraryMembershipDirective', () => {
 
   describe('toggleMembershipRequest', () => {
     beforeEach(() => {
-      getMembershipSpy = spyOn(
-        peopleApi,
-        'getSiteMembershipRequest'
-      ).and.returnValue(
-        Promise.resolve({ entry: requestedMembershipResponse })
-      );
-      addMembershipSpy = spyOn(
-        peopleApi,
-        'addSiteMembershipRequest'
-      ).and.returnValue(
-        Promise.resolve({ entry: requestedMembershipResponse })
-      );
-      deleteMembershipSpy = spyOn(
-        peopleApi,
-        'removeSiteMembershipRequest'
-      ).and.returnValue(Promise.resolve({}));
+      getMembershipSpy = spyOn(peopleApi, 'getSiteMembershipRequest').and.returnValue(Promise.resolve({ entry: requestedMembershipResponse }));
+      addMembershipSpy = spyOn(peopleApi, 'addSiteMembershipRequest').and.returnValue(Promise.resolve({ entry: requestedMembershipResponse }));
+      deleteMembershipSpy = spyOn(peopleApi, 'removeSiteMembershipRequest').and.returnValue(Promise.resolve({}));
     });
 
     it('should do nothing if there is no selected library ', fakeAsync(() => {
@@ -198,7 +172,7 @@ describe('LibraryMembershipDirective', () => {
         }
       ];
 
-      testData.forEach(data => {
+      testData.forEach((data) => {
         addMembershipSpy.and.returnValue(throwError({ message: data.fixture }));
         emitErrorSpy.calls.reset();
         directive.toggleMembershipRequest();

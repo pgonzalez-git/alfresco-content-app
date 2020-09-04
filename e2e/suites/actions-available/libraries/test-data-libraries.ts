@@ -23,13 +23,11 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Utils } from '../../../utilities/utils';
-
+import { Utils } from '@alfresco/aca-testing-shared';
 
 // ---- multiple selection ---
 
 export const trashActions = ['Permanently Delete', 'Restore'];
-
 
 // ---- single selection ----
 
@@ -39,15 +37,14 @@ const memberToolbarPrimary = ['Leave Library', 'View Details', 'More Actions'];
 const favToolbarMore = ['Delete', 'Remove Favorite'];
 const notFavToolbarMore = ['Delete', 'Favorite'];
 const searchMemberToolbarPrimary = ['Toggle search filter', 'Leave Library', 'View Details', 'More Actions'];
-const searchReqJoinToolbarPrimary = ['Toggle search filter', 'Cancel Join Request', 'View Details', 'More Actions'];
-const searchNotMemberToolbarPrimary = ['Toggle search filter', 'Join', 'View Details', 'More Actions'];
-const reqJoinToolbarMore = ['Cancel Join Request', 'View Details', 'More Actions'];
+const searchReqJoinToolbarPrimary = ['Toggle search filter', 'Cancel Join Request', 'More Actions'];
+const searchNotMemberToolbarPrimary = ['Toggle search filter', 'Join', 'More Actions'];
+const reqJoinToolbarMore = ['Cancel Join Request', 'More Actions'];
 const notMemberFavContextMenu = ['Join', 'Delete', 'Remove Favorite'];
 const notMemberNotFavContextMenu = ['Join', 'Delete', 'Favorite'];
-const notMemberToolbarPrimary = ['Join', 'View Details', 'More Actions'];
+const notMemberToolbarPrimary = ['Join', 'More Actions'];
 const reqJoinNotFavContextMenu = ['Cancel Join Request', 'Delete', 'Favorite'];
 const reqJoinFavContextMenu = ['Cancel Join Request', 'Delete', 'Remove Favorite'];
-
 
 export const publicUserMemberFav = {
   name: `site-public-member-fav-${Utils.random()}`,
@@ -178,4 +175,3 @@ export const site2InTrash = {
   name: `deleted-site2-${Utils.random()}`,
   trashActions
 };
-

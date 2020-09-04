@@ -29,6 +29,7 @@ import { Actions } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
 import { TestBed } from '@angular/core/testing';
 import { CoreModule } from '@alfresco/adf-core';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('CustomNameColumnComponent', () => {
   let fixture;
@@ -37,6 +38,7 @@ describe('CustomNameColumnComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
+        TranslateModule.forRoot(),
         CoreModule.forRoot(),
         DocumentListCustomComponentsModule,
         StoreModule.forRoot({ app: () => {} }, { initialState: {} })
@@ -62,9 +64,7 @@ describe('CustomNameColumnComponent', () => {
 
     fixture.detectChanges();
 
-    expect(
-      fixture.debugElement.nativeElement.querySelector('aca-locked-by')
-    ).toBe(null);
+    expect(fixture.debugElement.nativeElement.querySelector('aca-locked-by')).toBe(null);
   });
 
   it('should not render lock element if node is not a file', () => {
@@ -81,9 +81,7 @@ describe('CustomNameColumnComponent', () => {
 
     fixture.detectChanges();
 
-    expect(
-      fixture.debugElement.nativeElement.querySelector('aca-locked-by')
-    ).toBe(null);
+    expect(fixture.debugElement.nativeElement.querySelector('aca-locked-by')).toBe(null);
   });
 
   it('should render lock element if file is locked', () => {
@@ -101,9 +99,7 @@ describe('CustomNameColumnComponent', () => {
 
     fixture.detectChanges();
 
-    expect(
-      fixture.debugElement.nativeElement.querySelector('aca-locked-by')
-    ).not.toBe(null);
+    expect(fixture.debugElement.nativeElement.querySelector('aca-locked-by')).not.toBe(null);
   });
 
   it('should call parent component onClick method', () => {

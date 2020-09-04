@@ -29,27 +29,26 @@ import { setupTestBed, CoreModule } from '@alfresco/adf-core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Store } from '@ngrx/store';
-import {
-  DownloadNodesAction,
-  EditOfflineAction,
-  SnackbarErrorAction
-} from '@alfresco/aca-shared/store';
+import { NodeEntry } from '@alfresco/js-api';
+import { DownloadNodesAction, EditOfflineAction, SnackbarErrorAction } from '@alfresco/aca-shared/store';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('ToggleEditOfflineComponent', () => {
   let fixture;
   let component;
-  let selection;
   let store;
   let dispatchSpy;
+  let selectSpy;
+  const selection = { file: { entry: { name: 'test', properties: {} } } };
 
   setupTestBed({
-    imports: [CoreModule.forRoot()],
+    imports: [TranslateModule.forRoot(), CoreModule.forRoot()],
     declarations: [ToggleEditOfflineComponent, LockNodeDirective],
     providers: [
       {
         provide: Store,
         useValue: {
-          select: () => of(selection),
+          select: () => {},
           dispatch: () => {}
         }
       }
@@ -59,9 +58,10 @@ describe('ToggleEditOfflineComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ToggleEditOfflineComponent);
     component = fixture.componentInstance;
-    store = TestBed.get(Store);
+    store = TestBed.inject(Store);
 
     dispatchSpy = spyOn(store, 'dispatch');
+    selectSpy = spyOn(store, 'select');
   });
 
   afterEach(() => {
@@ -69,7 +69,7 @@ describe('ToggleEditOfflineComponent', () => {
   });
 
   it('should initialized with data from store', () => {
-    selection = { file: { entry: { properties: {} } } };
+    selectSpy.and.returnValue(of(selection));
 
     fixture.detectChanges();
 
@@ -77,48 +77,44 @@ describe('ToggleEditOfflineComponent', () => {
   });
 
   it('should download content if node is locked', () => {
-    component.selection = { entry: { properties: {} } };
+    selectSpy.and.returnValue(of(selection));
+    fixture.detectChanges();
 
     const isLocked = true;
     component.onToggleEvent(isLocked);
 
     fixture.detectChanges();
 
-    expect(dispatchSpy.calls.argsFor(0)).toEqual([
-      new DownloadNodesAction([component.selection])
-    ]);
+    expect(dispatchSpy.calls.argsFor(0)).toEqual([new DownloadNodesAction([selection.file as NodeEntry])]);
   });
 
   it('should not download content if node is not locked', () => {
-    component.selection = { entry: { properties: {} } };
+    selectSpy.and.returnValue(of(selection));
+    fixture.detectChanges();
 
     const isLocked = false;
     component.onToggleEvent(isLocked);
 
     fixture.detectChanges();
 
-    expect(dispatchSpy.calls.argsFor(0)).not.toEqual([
-      new DownloadNodesAction([component.selection])
-    ]);
+    expect(dispatchSpy.calls.argsFor(0)).not.toEqual([new DownloadNodesAction([selection.file as NodeEntry])]);
   });
 
   it('should dispatch EditOfflineAction action', () => {
-    component.selection = { entry: { properties: {} } };
+    selectSpy.and.returnValue(of(selection));
+    fixture.detectChanges();
 
     const isLocked = false;
     component.onToggleEvent(isLocked);
 
     fixture.detectChanges();
 
-    expect(dispatchSpy.calls.argsFor(0)).toEqual([
-      new EditOfflineAction(component.selection)
-    ]);
+    expect(dispatchSpy.calls.argsFor(0)).toEqual([new EditOfflineAction(selection.file as NodeEntry)]);
   });
 
   it('should raise notification on lock error', () => {
-    component.selection = {
-      entry: { name: 'test' }
-    };
+    selectSpy.and.returnValue(of(selection));
+    fixture.detectChanges();
 
     component.onLockError();
     fixture.detectChanges();
@@ -131,9 +127,8 @@ describe('ToggleEditOfflineComponent', () => {
   });
 
   it('should raise notification on unlock error', () => {
-    component.selection = {
-      entry: { name: 'test' }
-    };
+    selectSpy.and.returnValue(of(selection));
+    fixture.detectChanges();
 
     component.onUnlockLockError();
     fixture.detectChanges();

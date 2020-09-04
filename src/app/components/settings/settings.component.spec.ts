@@ -28,14 +28,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed, StorageService } from '@alfresco/adf-core';
 import { AppSettingsModule } from './settings.module';
 import { AppTestingModule } from '../../testing/app-testing.module';
-import { SettingsParameterRef } from '../../types';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { By } from '@angular/platform-browser';
-import {
-  TranslateModule,
-  TranslateLoader,
-  TranslateFakeLoader
-} from '@ngx-translate/core';
+import { TranslateModule, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
+import { AppExtensionService, SettingsParameterRef } from '@alfresco/aca-shared';
 
 describe('SettingsComponent', () => {
   let fixture: ComponentFixture<SettingsComponent>;
@@ -60,8 +55,8 @@ describe('SettingsComponent', () => {
     fixture = TestBed.createComponent(SettingsComponent);
     component = fixture.componentInstance;
 
-    storage = TestBed.get(StorageService);
-    appExtensions = TestBed.get(AppExtensionService);
+    storage = TestBed.inject(StorageService);
+    appExtensions = TestBed.inject(AppExtensionService);
 
     stringParam = {
       key: 'key',
@@ -98,10 +93,7 @@ describe('SettingsComponent', () => {
     component.setParamValue(stringParam, 'test');
 
     expect(stringParam.value).toBe('test');
-    expect(storage.setItem).toHaveBeenCalledWith(
-      stringParam.key,
-      stringParam.value
-    );
+    expect(storage.setItem).toHaveBeenCalledWith(stringParam.key, stringParam.value);
   });
 
   it('should save param value only if changed', () => {
@@ -146,9 +138,7 @@ describe('SettingsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const panels = fixture.debugElement.queryAll(
-      By.css('.mat-expansion-panel')
-    );
+    const panels = fixture.debugElement.queryAll(By.css('.mat-expansion-panel'));
     expect(panels.length).toBe(3);
   });
 });

@@ -25,23 +25,18 @@
 
 import { NgModule } from '@angular/core';
 import { DocumentListDirective } from './document-list.directive';
-import { PaginationDirective } from './pagination.directive';
 import { LibraryMembershipDirective } from './library-membership.directive';
 import { LibraryFavoriteDirective } from './library-favorite.directive';
 import { LockNodeDirective } from './lock-node.directive';
+import { SharedDirectivesModule } from '@alfresco/aca-shared';
 
 export function directives() {
-  return [
-    DocumentListDirective,
-    PaginationDirective,
-    LibraryMembershipDirective,
-    LibraryFavoriteDirective,
-    LockNodeDirective
-  ];
+  return [DocumentListDirective, LibraryMembershipDirective, LibraryFavoriteDirective, LockNodeDirective];
 }
 
 @NgModule({
+  imports: [SharedDirectivesModule],
   declarations: directives(),
-  exports: directives()
+  exports: [directives(), SharedDirectivesModule]
 })
 export class DirectivesModule {}

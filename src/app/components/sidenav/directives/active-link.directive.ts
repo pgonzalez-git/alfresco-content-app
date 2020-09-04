@@ -23,16 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  Directive,
-  OnInit,
-  Input,
-  ElementRef,
-  Renderer2,
-  ContentChildren,
-  QueryList,
-  AfterContentInit
-} from '@angular/core';
+import { Directive, OnInit, Input, ElementRef, Renderer2, ContentChildren, QueryList, AfterContentInit, Optional } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -50,16 +41,12 @@ export class ActiveLinkDirective implements OnInit, AfterContentInit {
 
   private onDestroy$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(
-    private router: Router,
-    private element: ElementRef,
-    private renderer: Renderer2
-  ) {}
+  constructor(private router: Router, private element: ElementRef, private renderer: Renderer2, @Optional() private action?: ActionDirective) {}
 
   ngOnInit() {
     this.router.events
       .pipe(
-        filter(event => event instanceof NavigationEnd),
+        filter((event) => event instanceof NavigationEnd),
         takeUntil(this.onDestroy$)
       )
       .subscribe((event: NavigationEnd) => {
@@ -68,19 +55,25 @@ export class ActiveLinkDirective implements OnInit, AfterContentInit {
   }
 
   private update(url: string) {
-    this.links.map(item => {
+    if (this.action) {
+      const itemUrl = this.resolveUrl(this.action);
+      this.render(url, itemUrl);
+    }
+
+    this.links.map((item) => {
       const itemUrl = this.resolveUrl(item);
-      if (url && url.substring(1).startsWith(itemUrl)) {
-        this.isLinkActive = true;
-        this.renderer.addClass(this.element.nativeElement, this.acaActiveLink);
-      } else {
-        this.isLinkActive = false;
-        this.renderer.removeClass(
-          this.element.nativeElement,
-          this.acaActiveLink
-        );
-      }
+      this.render(url, itemUrl);
     });
+  }
+
+  private render(routerUrl: string, actionUrl: string) {
+    if (routerUrl && routerUrl.substring(1).startsWith(actionUrl)) {
+      this.isLinkActive = true;
+      this.renderer.addClass(this.element.nativeElement, this.acaActiveLink);
+    } else {
+      this.isLinkActive = false;
+      this.renderer.removeClass(this.element.nativeElement, this.acaActiveLink);
+    }
   }
 
   ngAfterContentInit() {
@@ -89,9 +82,6 @@ export class ActiveLinkDirective implements OnInit, AfterContentInit {
   }
 
   private resolveUrl(item): string {
-    return (
-      (item.action && (item.action.click && item.action.click.payload)) ||
-      item.action.route
-    );
+    return (item.action && item.action.click && item.action.click.payload) || item.action.route;
   }
 }

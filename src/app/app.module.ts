@@ -23,24 +23,13 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, HammerModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, RouteReuseStrategy } from '@angular/router';
-import {
-  BrowserAnimationsModule,
-  NoopAnimationsModule
-} from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule, NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import {
-  TRANSLATION_PROVIDER,
-  CoreModule,
-  AppConfigService,
-  DebugAppConfigService
-} from '@alfresco/adf-core';
-import {
-  LibraryDialogComponent,
-  ContentModule
-} from '@alfresco/adf-content-services';
+import { TRANSLATION_PROVIDER, CoreModule, AppConfigService, DebugAppConfigService } from '@alfresco/adf-core';
+import { ContentModule } from '@alfresco/adf-content-services';
 import { AppRouteReuseStrategy, SharedModule } from '@alfresco/aca-shared';
 
 import { AppComponent } from './app.component';
@@ -49,7 +38,6 @@ import { APP_ROUTES } from './app.routes';
 import { FilesComponent } from './components/files/files.component';
 import { LibrariesComponent } from './components/libraries/libraries.component';
 import { FavoriteLibrariesComponent } from './components/favorite-libraries/favorite-libraries.component';
-import { NodeVersionUploadDialogComponent } from './dialogs/node-version-upload/node-version-upload.dialog';
 import { NodeVersionsDialogComponent } from './dialogs/node-versions/node-versions.dialog';
 
 import { AppStoreModule } from './store/app-store.module';
@@ -130,7 +118,7 @@ registerLocaleData(localeSv);
     SharedModule.forRoot(),
     AppStoreModule,
     CoreExtensionsModule.forRoot(),
-    ExtensionsModule,
+    ExtensionsModule.forRoot(),
     AppExtensionsModule,
     AppLoginModule,
     AppCommonModule,
@@ -147,14 +135,14 @@ registerLocaleData(localeSv);
     AppSearchInputModule,
     AppSearchResultsModule,
     AppHeaderModule,
-    AppNodeVersionModule
+    AppNodeVersionModule,
+    HammerModule
   ],
   declarations: [
     AppComponent,
     FilesComponent,
     LibrariesComponent,
     FavoriteLibrariesComponent,
-    NodeVersionUploadDialogComponent,
     NodeVersionsDialogComponent,
     FavoritesComponent,
     RecentFilesComponent,
@@ -172,12 +160,6 @@ registerLocaleData(localeSv);
         source: 'assets'
       }
     }
-  ],
-  entryComponents: [
-    NodeVersionsDialogComponent,
-    NodeVersionUploadDialogComponent,
-    LibraryDialogComponent,
-    CreateFromTemplateDialogComponent
   ],
   bootstrap: [AppComponent]
 })

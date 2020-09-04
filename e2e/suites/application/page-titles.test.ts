@@ -24,17 +24,15 @@
  */
 
 import { browser } from 'protractor';
-import { PAGE_TITLES } from '../../configs';
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { Utils } from '../../utilities/utils';
+import { PAGE_TITLES, LoginPage, BrowsingPage, RepoClient, Utils } from '@alfresco/aca-testing-shared';
 
 describe('Page titles', () => {
   const loginPage = new LoginPage();
   const page = new BrowsingPage();
   const adminApi = new RepoClient();
   const { nodes: nodesApi } = adminApi;
-  const file = `file-${Utils.random()}.txt`; let fileId;
+  const file = `file-${Utils.random()}.txt`;
+  let fileId: string;
   const { searchInput } = page.header;
 
   describe('on Login / Logout pages', () => {

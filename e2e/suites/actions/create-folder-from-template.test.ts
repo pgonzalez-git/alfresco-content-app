@@ -23,12 +23,17 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { SelectTemplateDialog } from '../../components/dialog/select-template-dialog';
-import { CreateFromTemplateDialog } from '../../components/dialog/create-from-template-dialog';
-import { Utils, clearTextWithBackspace } from '../../utilities/utils';
-import { AdminActions } from '../../utilities/admin-actions';
-import { RepoClient, NodeContentTree } from '../../utilities/repo-client/repo-client';
+import {
+  LoginPage,
+  BrowsingPage,
+  SelectTemplateDialog,
+  CreateFromTemplateDialog,
+  Utils,
+  clearTextWithBackspace,
+  AdminActions,
+  RepoClient,
+  NodeContentTree
+} from '@alfresco/aca-testing-shared';
 
 describe('Create folder from template', () => {
   const random = Utils.random();
@@ -172,7 +177,7 @@ describe('Create folder from template', () => {
 
       await selectTemplateDialog.breadcrumb.openPath();
 
-      expect(await selectTemplateDialog.breadcrumb.getPathItems()).toEqual([ templateFolder2, 'Space Templates' ]);
+      expect(await selectTemplateDialog.breadcrumb.getPathItems()).toEqual([templateFolder2, 'Space Templates']);
     });
 
     it(`[C325150] Templates list doesn't allow multiple selection`, async () => {
@@ -180,14 +185,14 @@ describe('Create folder from template', () => {
 
       await selectTemplateDialog.dataTable.selectItem(templateFolder1);
       expect(await selectTemplateDialog.dataTable.getSelectedRowsCount()).toEqual(1, 'Incorrect number of selected rows');
-      expect(await selectTemplateDialog.dataTable.getSelectedRowsNames()).toEqual([ templateFolder1 ], 'Incorrect selected item');
+      expect(await selectTemplateDialog.dataTable.getSelectedRowsNames()).toEqual([templateFolder1], 'Incorrect selected item');
 
       await Utils.pressCmd();
       await selectTemplateDialog.dataTable.selectItem(templateFolder2);
       await Utils.releaseKeyPressed();
 
       expect(await selectTemplateDialog.dataTable.getSelectedRowsCount()).toEqual(1, 'Incorrect number of selected rows');
-      expect(await selectTemplateDialog.dataTable.getSelectedRowsNames()).toEqual([ templateFolder2 ], 'Incorrect selected item');
+      expect(await selectTemplateDialog.dataTable.getSelectedRowsNames()).toEqual([templateFolder2], 'Incorrect selected item');
     });
 
     it('[C325153] Links to folders are not displayed', async () => {
@@ -238,7 +243,7 @@ describe('Create folder from template', () => {
     });
 
     it('[C325144] Special characters in folder name', async () => {
-      const namesWithSpecialChars = [ 'a*a', 'a"a', 'a<a', 'a>a', `a\\a`, 'a/a', 'a?a', 'a:a', 'a|a' ];
+      const namesWithSpecialChars = ['a*a', 'a"a', 'a<a', 'a>a', `a\\a`, 'a/a', 'a?a', 'a:a', 'a|a'];
 
       for (const name of namesWithSpecialChars) {
         await createFromTemplateDialog.enterName(name);
@@ -383,5 +388,4 @@ describe('Create folder from template', () => {
       expect(await createFromTemplateDialog.isDialogOpen()).toBe(true, 'dialog is not present');
     });
   });
-
 });

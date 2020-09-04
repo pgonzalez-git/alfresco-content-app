@@ -23,31 +23,17 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick
-} from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SearchResultsComponent } from './search-results.component';
 import { AppTestingModule } from '../../../testing/app-testing.module';
 import { AppSearchResultsModule } from '../search-results.module';
-import {
-  CoreModule,
-  AppConfigService,
-  AlfrescoApiService,
-  AlfrescoApiServiceMock,
-  TranslationService
-} from '@alfresco/adf-core';
+import { CoreModule, AppConfigService, AlfrescoApiService, AlfrescoApiServiceMock, TranslationService } from '@alfresco/adf-core';
 import { Store } from '@ngrx/store';
-import {
-  NavigateToFolder,
-  SnackbarErrorAction
-} from '@alfresco/aca-shared/store';
+import { NavigateToFolder, SnackbarErrorAction } from '@alfresco/aca-shared/store';
 import { Pagination, SearchRequest } from '@alfresco/js-api';
 import { SearchQueryBuilderService } from '@alfresco/adf-content-services';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('SearchComponent', () => {
   let component: SearchResultsComponent;
@@ -62,7 +48,7 @@ describe('SearchComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [CoreModule.forRoot(), AppTestingModule, AppSearchResultsModule],
+      imports: [TranslateModule.forRoot(), CoreModule.forRoot(), AppTestingModule, AppSearchResultsModule],
       providers: [
         {
           provide: AlfrescoApiService,
@@ -78,8 +64,7 @@ describe('SearchComponent', () => {
             },
             params: [
               {
-                q:
-                  'TYPE: "cm:folder" AND %28=cm: name: email OR cm: name: budget%29'
+                q: 'TYPE: "cm:folder" AND %28=cm: name: email OR cm: name: budget%29'
               }
             ]
           }
@@ -87,12 +72,12 @@ describe('SearchComponent', () => {
       ]
     });
 
-    config = TestBed.get(AppConfigService);
-    store = TestBed.get(Store);
-    queryBuilder = TestBed.get(SearchQueryBuilderService);
-    alfrescoApi = TestBed.get(AlfrescoApiService);
-    translate = TestBed.get(TranslationService);
-    router = TestBed.get(Router);
+    config = TestBed.inject(AppConfigService);
+    store = TestBed.inject(Store);
+    queryBuilder = TestBed.inject(SearchQueryBuilderService);
+    alfrescoApi = TestBed.inject(AlfrescoApiService);
+    translate = TestBed.inject(TranslationService);
+    router = TestBed.inject(Router);
 
     fixture = TestBed.createComponent(SearchResultsComponent);
     component = fixture.componentInstance;
@@ -115,9 +100,7 @@ describe('SearchComponent', () => {
     queryBuilder.execute();
     tick();
 
-    expect(store.dispatch).toHaveBeenCalledWith(
-      new SnackbarErrorAction('APP.BROWSE.SEARCH.ERRORS.GENERIC')
-    );
+    expect(store.dispatch).toHaveBeenCalledWith(new SnackbarErrorAction('APP.BROWSE.SEARCH.ERRORS.GENERIC'));
   }));
 
   it('should raise a known error if search fails', fakeAsync(() => {
@@ -140,9 +123,7 @@ describe('SearchComponent', () => {
     queryBuilder.execute();
     tick();
 
-    expect(store.dispatch).toHaveBeenCalledWith(
-      new SnackbarErrorAction('Known Error')
-    );
+    expect(store.dispatch).toHaveBeenCalledWith(new SnackbarErrorAction('Known Error'));
   }));
 
   it('should raise a generic error if search fails', fakeAsync(() => {
@@ -165,15 +146,11 @@ describe('SearchComponent', () => {
     queryBuilder.execute();
     tick();
 
-    expect(store.dispatch).toHaveBeenCalledWith(
-      new SnackbarErrorAction('Generic Error')
-    );
+    expect(store.dispatch).toHaveBeenCalledWith(new SnackbarErrorAction('Generic Error'));
   }));
 
   it('should decode encoded URI', () => {
-    expect(queryBuilder.userQuery).toEqual(
-      '(TYPE: "cm:folder" AND (=cm: name: email OR cm: name: budget))'
-    );
+    expect(queryBuilder.userQuery).toEqual('(TYPE: "cm:folder" AND (=cm: name: email OR cm: name: budget))');
   });
 
   it('should return null if formatting invalid query', () => {
@@ -222,9 +199,7 @@ describe('SearchComponent', () => {
 
     const query = component.formatSearchQuery('big yellow banana');
 
-    expect(query).toBe(
-      `(cm:name:"big*") AND (cm:name:"yellow*") AND (cm:name:"banana*")`
-    );
+    expect(query).toBe(`(cm:name:"big*") AND (cm:name:"yellow*") AND (cm:name:"banana*")`);
   });
 
   it('should support conjunctions with AND operator', () => {
@@ -276,9 +251,7 @@ describe('SearchComponent', () => {
 
     const query = component.formatSearchQuery('=test1.pdf or =test2.pdf');
 
-    expect(query).toBe(
-      `(=cm:name:"test1.pdf" OR =cm:title:"test1.pdf") or (=cm:name:"test2.pdf" OR =cm:title:"test2.pdf")`
-    );
+    expect(query).toBe(`(=cm:name:"test1.pdf" OR =cm:title:"test1.pdf") or (=cm:name:"test2.pdf" OR =cm:title:"test2.pdf")`);
   });
 
   it('should navigate to folder on double click', () => {

@@ -23,8 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BrowsingPage, SearchResultsPage } from '../../../pages/pages';
-import { Utils } from '../../../utilities/utils';
+import { BrowsingPage, SearchResultsPage, Utils } from '@alfresco/aca-testing-shared';
 import * as testData from './test-data-permissions';
 import * as testUtil from '../test-util';
 
@@ -35,7 +34,6 @@ const { searchInput } = searchResultsPage.header;
 
 export function collaboratorTests(siteName?: string) {
   describe('available actions : ', () => {
-
     beforeEach(async () => {
       await Utils.pressEscape();
     });
@@ -92,7 +90,15 @@ export function collaboratorTests(siteName?: string) {
         await dataTable.waitForHeader();
 
         const expectedToolbarPrimary = ['Activate full-screen mode', 'Shared Link Settings', 'Download', 'Print', 'View Details', 'More Actions'];
-        const expectedToolbarMore = ['Edit in Microsoft Office™', 'Edit Offline', 'Upload New Version', 'Remove Favorite', 'Copy', 'Manage Versions', 'Permissions'];
+        const expectedToolbarMore = [
+          'Edit in Microsoft Office™',
+          'Edit Offline',
+          'Upload New Version',
+          'Remove Favorite',
+          'Copy',
+          'Manage Versions',
+          'Permissions'
+        ];
 
         await testUtil.checkViewerActions(testData.fileDocxSharedFav.name, expectedToolbarPrimary, expectedToolbarMore);
       });
@@ -101,7 +107,15 @@ export function collaboratorTests(siteName?: string) {
         await page.clickSharedFilesAndWait();
 
         const expectedToolbarPrimary = ['Activate full-screen mode', 'Shared Link Settings', 'Download', 'Print', 'View Details', 'More Actions'];
-        const expectedToolbarMore = ['Edit in Microsoft Office™', 'Edit Offline', 'Upload New Version', 'Remove Favorite', 'Copy', 'Manage Versions', 'Permissions'];
+        const expectedToolbarMore = [
+          'Edit in Microsoft Office™',
+          'Edit Offline',
+          'Upload New Version',
+          'Remove Favorite',
+          'Copy',
+          'Manage Versions',
+          'Permissions'
+        ];
 
         await testUtil.checkViewerActions(testData.fileDocxSharedFav.name, expectedToolbarPrimary, expectedToolbarMore);
       });
@@ -110,7 +124,15 @@ export function collaboratorTests(siteName?: string) {
         await page.clickFavoritesAndWait();
 
         const expectedToolbarPrimary = ['Activate full-screen mode', 'Shared Link Settings', 'Download', 'Print', 'View Details', 'More Actions'];
-        const expectedToolbarMore = ['Edit in Microsoft Office™', 'Edit Offline', 'Upload New Version', 'Remove Favorite', 'Copy', 'Manage Versions', 'Permissions'];
+        const expectedToolbarMore = [
+          'Edit in Microsoft Office™',
+          'Edit Offline',
+          'Upload New Version',
+          'Remove Favorite',
+          'Copy',
+          'Manage Versions',
+          'Permissions'
+        ];
 
         await testUtil.checkViewerActions(testData.fileDocxSharedFav.name, expectedToolbarPrimary, expectedToolbarMore);
       });
@@ -121,7 +143,15 @@ export function collaboratorTests(siteName?: string) {
         await searchResultsPage.waitForResults();
 
         const expectedToolbarPrimary = ['Activate full-screen mode', 'Shared Link Settings', 'Download', 'Print', 'View Details', 'More Actions'];
-        const expectedToolbarMore = ['Edit in Microsoft Office™', 'Edit Offline', 'Upload New Version', 'Remove Favorite', 'Copy', 'Manage Versions', 'Permissions'];
+        const expectedToolbarMore = [
+          'Edit in Microsoft Office™',
+          'Edit Offline',
+          'Upload New Version',
+          'Remove Favorite',
+          'Copy',
+          'Manage Versions',
+          'Permissions'
+        ];
 
         await testUtil.checkViewerActions(testData.fileDocxSharedFav.name, expectedToolbarPrimary, expectedToolbarMore);
       });
@@ -226,7 +256,6 @@ export function filesLockedByCurrentUser(siteName?: string) {
 
 export function filesLockedByOtherUser(siteName?: string) {
   describe('available actions : ', () => {
-
     beforeEach(async () => {
       await Utils.pressEscape();
     });
@@ -251,7 +280,16 @@ export function filesLockedByOtherUser(siteName?: string) {
 
       const expectedToolbarPrimary = ['Shared Link Settings', 'Download', 'View', 'View Details', 'More Actions'];
       // TODO: investigate why 'Upload New Version' appears and raise issue
-      const expectedToolbarMore = ['Cancel Editing', 'Upload New Version', 'Remove Favorite', 'Move', 'Copy', 'Delete', 'Manage Versions', 'Permissions'];
+      const expectedToolbarMore = [
+        'Cancel Editing',
+        'Upload New Version',
+        'Remove Favorite',
+        'Move',
+        'Copy',
+        'Delete',
+        'Manage Versions',
+        'Permissions'
+      ];
 
       await testUtil.checkToolbarActions(testData.fileLockedByUser, expectedToolbarPrimary, expectedToolbarMore);
     });

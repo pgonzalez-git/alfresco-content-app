@@ -28,7 +28,6 @@ import { CommonModule } from '@angular/common';
 import { APP_INITIALIZER, ModuleWithProviders, NgModule } from '@angular/core';
 import { AppLayoutComponent } from '../components/layout/app-layout/app-layout.component';
 import * as rules from '@alfresco/aca-shared/rules';
-import { AppExtensionService } from './extension.service';
 import { ToggleInfoDrawerComponent } from '../components/toolbar/toggle-info-drawer/toggle-info-drawer.component';
 import { ToggleFavoriteComponent } from '../components/toolbar/toggle-favorite/toggle-favorite.component';
 import { ToggleFavoriteLibraryComponent } from '../components/toolbar/toggle-favorite-library/toggle-favorite-library.component';
@@ -53,6 +52,9 @@ import { ToggleSharedComponent } from '../components/common/toggle-shared/toggle
 import { ViewNodeComponent } from '../components/toolbar/view-node/view-node.component';
 import { LanguagePickerComponent } from '../components/common/language-picker/language-picker.component';
 import { LogoutComponent } from '../components/common/logout/logout.component';
+import { CurrentUserComponent } from '../components/current-user/current-user.component';
+import { AppExtensionService, ExtensionsDataLoaderGuard } from '@alfresco/aca-shared';
+import { PreviewComponent } from '../components/preview/preview.component';
 
 export function setupExtensions(service: AppExtensionService): Function {
   return () => service.load();
@@ -62,7 +64,7 @@ export function setupExtensions(service: AppExtensionService): Function {
   imports: [CommonModule, CoreModule.forChild(), ExtensionsModule]
 })
 export class CoreExtensionsModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<CoreExtensionsModule> {
     return {
       ngModule: CoreExtensionsModule,
       providers: [
@@ -76,7 +78,7 @@ export class CoreExtensionsModule {
     };
   }
 
-  static forChild(): ModuleWithProviders {
+  static forChild(): ModuleWithProviders<CoreExtensionsModule> {
     return {
       ngModule: CoreExtensionsModule
     };
@@ -89,6 +91,7 @@ export class CoreExtensionsModule {
       'app.components.tabs.library.metadata': LibraryMetadataTabComponent,
       'app.components.tabs.comments': CommentsTabComponent,
       'app.components.tabs.versions': VersionsTabComponent,
+      'app.components.preview': PreviewComponent,
       'app.toolbar.toggleInfoDrawer': ToggleInfoDrawerComponent,
       'app.toolbar.toggleFavorite': ToggleFavoriteComponent,
       'app.toolbar.toggleFavoriteLibrary': ToggleFavoriteLibraryComponent,
@@ -105,11 +108,13 @@ export class CoreExtensionsModule {
       'app.toolbar.toggleEditOffline': ToggleEditOfflineComponent,
       'app.toolbar.viewNode': ViewNodeComponent,
       'app.languagePicker': LanguagePickerComponent,
-      'app.logout': LogoutComponent
+      'app.logout': LogoutComponent,
+      'app.user': CurrentUserComponent
     });
 
     extensions.setAuthGuards({
-      'app.auth': AuthGuardEcm
+      'app.auth': AuthGuardEcm,
+      'app.extensions.dataLoaderGuard': ExtensionsDataLoaderGuard
     });
 
     extensions.setEvaluators({
@@ -125,6 +130,7 @@ export class CoreExtensionsModule {
       canManagePermissions: rules.canManagePermissions,
       canToggleEditOffline: rules.canToggleEditOffline,
       canToggleFavorite: rules.canToggleFavorite,
+      isLibraryManager: rules.isLibraryManager,
 
       'app.selection.canDelete': rules.canDeleteSelection,
       'app.selection.file.canUnlock': rules.canUnlockFile,

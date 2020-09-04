@@ -23,38 +23,15 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ViewEncapsulation,
-  HostListener
-} from '@angular/core';
-import {
-  ActivatedRoute,
-  Router,
-  UrlTree,
-  UrlSegmentGroup,
-  UrlSegment,
-  PRIMARY_OUTLET
-} from '@angular/router';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener } from '@angular/core';
+import { Location } from '@angular/common';
+import { ActivatedRoute, Router, UrlTree, UrlSegmentGroup, UrlSegment, PRIMARY_OUTLET } from '@angular/router';
 import { debounceTime, map, takeUntil } from 'rxjs/operators';
-import {
-  UserPreferencesService,
-  ObjectUtils,
-  UploadService,
-  AlfrescoApiService
-} from '@alfresco/adf-core';
+import { UserPreferencesService, ObjectUtils, UploadService, AlfrescoApiService } from '@alfresco/adf-core';
 import { Store } from '@ngrx/store';
-import {
-  AppStore,
-  ClosePreviewAction,
-  ViewerActionTypes,
-  SetSelectedNodesAction
-} from '@alfresco/aca-shared/store';
+import { AppStore, ClosePreviewAction, ViewerActionTypes, SetSelectedNodesAction } from '@alfresco/aca-shared/store';
 import { PageComponent } from '../page.component';
-import { ContentApiService } from '@alfresco/aca-shared';
-import { AppExtensionService } from '../../extensions/extension.service';
+import { AppExtensionService, ContentApiService } from '@alfresco/aca-shared';
 import { ContentManagementService } from '../../services/content-management.service';
 import { ContentActionRef, ViewerExtensionRef } from '@alfresco/adf-extensions';
 import { SearchRequest } from '@alfresco/js-api';
@@ -68,18 +45,11 @@ import { Actions, ofType } from '@ngrx/effects';
   encapsulation: ViewEncapsulation.None,
   host: { class: 'app-preview' }
 })
-export class PreviewComponent extends PageComponent
-  implements OnInit, OnDestroy {
+export class PreviewComponent extends PageComponent implements OnInit, OnDestroy {
   previewLocation: string = null;
   routesSkipNavigation = ['shared', 'recent-files', 'favorites'];
   navigateSource: string = null;
-  navigationSources = [
-    'favorites',
-    'libraries',
-    'personal-files',
-    'recent-files',
-    'shared'
-  ];
+  navigationSources = ['favorites', 'libraries', 'personal-files', 'recent-files', 'shared'];
   folderId: string = null;
   nodeId: string = null;
   previousNodeId: string;
@@ -88,6 +58,8 @@ export class PreviewComponent extends PageComponent
   openWith: Array<ContentActionRef> = [];
   contentExtensions: Array<ViewerExtensionRef> = [];
   showRightSide = false;
+  navigateBackAsClose = false;
+  simplestMode = false;
 
   recentFileFilters = [
     'TYPE:"content"',
@@ -113,11 +85,7 @@ export class PreviewComponent extends PageComponent
     '-TYPE:"lnk:link"'
   ];
 
-  private containersSkipNavigation = [
-    'adf-viewer__sidebar',
-    'cdk-overlay-container',
-    'adf-image-viewer'
-  ];
+  private containersSkipNavigation = ['adf-viewer__sidebar', 'cdk-overlay-container', 'adf-image-viewer'];
 
   constructor(
     private contentApi: ContentApiService,
@@ -127,6 +95,7 @@ export class PreviewComponent extends PageComponent
     private apiService: AlfrescoApiService,
     private uploadService: UploadService,
     private actions$: Actions,
+    private location: Location,
     store: Store<AppStore>,
     extensions: AppExtensionService,
     content: ContentManagementService
@@ -139,15 +108,15 @@ export class PreviewComponent extends PageComponent
 
     from(this.infoDrawerOpened$)
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(val => {
+      .subscribe((val) => {
         this.showRightSide = val;
       });
 
-    this.previewLocation = this.router.url
-      .substr(0, this.router.url.indexOf('/', 1))
-      .replace(/\//g, '');
+    this.previewLocation = this.router.url.substr(0, this.router.url.indexOf('/', 1)).replace(/\//g, '');
 
     const routeData = this.route.snapshot.data;
+    this.navigateBackAsClose = !!routeData.navigateBackAsClose;
+    this.simplestMode = !!routeData.simplestMode;
 
     if (routeData.navigateMultiple) {
       this.navigateMultiple = true;
@@ -160,7 +129,7 @@ export class PreviewComponent extends PageComponent
       }
     }
 
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       this.folderId = params.folderId;
       const id = params.nodeId;
       if (id) {
@@ -169,17 +138,11 @@ export class PreviewComponent extends PageComponent
     });
 
     this.subscriptions = this.subscriptions.concat([
-      this.content.nodesDeleted.subscribe(() =>
-        this.navigateToFileLocation(true)
-      ),
+      this.content.nodesDeleted.subscribe(() => this.navigateToFileLocation(true)),
 
-      this.uploadService.fileUploadDeleted.subscribe(() =>
-        this.navigateToFileLocation(true)
-      ),
+      this.uploadService.fileUploadDeleted.subscribe(() => this.navigateToFileLocation(true)),
 
-      this.uploadService.fileUploadComplete
-        .pipe(debounceTime(300))
-        .subscribe(file => this.apiService.nodeUpdated.next(file.data.entry)),
+      this.uploadService.fileUploadComplete.pipe(debounceTime(300)).subscribe((file) => this.apiService.nodeUpdated.next(file.data.entry)),
 
       this.actions$
         .pipe(
@@ -207,10 +170,7 @@ export class PreviewComponent extends PageComponent
         this.store.dispatch(new SetSelectedNodesAction([{ entry: this.node }]));
 
         if (this.node && this.node.isFile) {
-          const nearest = await this.getNearestNodes(
-            this.node.id,
-            this.node.parentId
-          );
+          const nearest = await this.getNearestNodes(this.node.id, this.node.parentId);
 
           this.previousNodeId = nearest.left;
           this.nextNodeId = nearest.right;
@@ -248,43 +208,35 @@ export class PreviewComponent extends PageComponent
   }
 
   navigateToFileLocation(shouldNavigate: boolean) {
-    const shouldSkipNavigation = this.routesSkipNavigation.includes(
-      this.previewLocation
-    );
-
     if (shouldNavigate) {
-      const route = this.getNavigationCommands(this.previewLocation);
+      if (this.navigateBackAsClose) {
+        this.location.back();
+      } else {
+        const shouldSkipNavigation = this.routesSkipNavigation.includes(this.previewLocation);
+        const route = this.getNavigationCommands(this.previewLocation);
 
-      if (!shouldSkipNavigation && this.folderId) {
-        route.push(this.folderId);
+        if (!shouldSkipNavigation && this.folderId) {
+          route.push(this.folderId);
+        }
+        this.router.navigate(route);
       }
-
-      this.router.navigate(route);
     }
   }
 
   /** Handles navigation to a previous document */
   onNavigateBefore(event: MouseEvent | KeyboardEvent): void {
-    if (
-      event.type !== 'click' &&
-      this.shouldNavigate(event.target as HTMLElement)
-    ) {
+    if (event.type !== 'click' && this.shouldNavigate(event.target as HTMLElement)) {
       return;
     }
 
     if (this.previousNodeId) {
-      this.router.navigate(
-        this.getPreviewPath(this.folderId, this.previousNodeId)
-      );
+      this.router.navigate(this.getPreviewPath(this.folderId, this.previousNodeId));
     }
   }
 
   /** Handles navigation to a next document */
   onNavigateNext(event: MouseEvent | KeyboardEvent): void {
-    if (
-      event.type !== 'click' &&
-      this.shouldNavigate(event.target as HTMLElement)
-    ) {
+    if (event.type !== 'click' && this.shouldNavigate(event.target as HTMLElement)) {
       return;
     }
 
@@ -317,10 +269,7 @@ export class PreviewComponent extends PageComponent
    * @param nodeId Unique identifier of the document node
    * @param folderId Unique identifier of the containing folder node.
    */
-  async getNearestNodes(
-    nodeId: string,
-    folderId: string
-  ): Promise<{ left: string; right: string }> {
+  async getNearestNodes(nodeId: string, folderId: string): Promise<{ left: string; right: string }> {
     const empty = {
       left: null,
       right: null
@@ -354,10 +303,8 @@ export class PreviewComponent extends PageComponent
    */
   async getFileIds(source: string, folderId?: string): Promise<string[]> {
     if ((source === 'personal-files' || source === 'libraries') && folderId) {
-      const sortKey =
-        this.preferences.get('personal-files.sorting.key') || 'modifiedAt';
-      const sortDirection =
-        this.preferences.get('personal-files.sorting.direction') || 'desc';
+      const sortKey = this.preferences.get('personal-files.sorting.key') || 'modifiedAt';
+      const sortDirection = this.preferences.get('personal-files.sorting.direction') || 'desc';
       const nodes = await this.contentApi
         .getNodeChildren(folderId, {
           // orderBy: `${sortKey} ${sortDirection}`,
@@ -366,10 +313,10 @@ export class PreviewComponent extends PageComponent
         })
         .toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortKey, sortDirection);
 
-      return entries.map(obj => obj.id);
+      return entries.map((obj) => obj.id);
     }
 
     if (source === 'favorites') {
@@ -380,21 +327,17 @@ export class PreviewComponent extends PageComponent
         })
         .toPromise();
 
-      const sortKey =
-        this.preferences.get('favorites.sorting.key') || 'modifiedAt';
-      const sortDirection =
-        this.preferences.get('favorites.sorting.direction') || 'desc';
-      const files = nodes.list.entries.map(obj => obj.entry.target.file);
+      const sortKey = this.preferences.get('favorites.sorting.key') || 'modifiedAt';
+      const sortDirection = this.preferences.get('favorites.sorting.direction') || 'desc';
+      const files = nodes.list.entries.map((obj) => obj.entry.target.file);
       this.sort(files, sortKey, sortDirection);
 
-      return files.map(f => f.id);
+      return files.map((f) => f.id);
     }
 
     if (source === 'shared') {
-      const sortingKey =
-        this.preferences.get('shared.sorting.key') || 'modifiedAt';
-      const sortingDirection =
-        this.preferences.get('shared.sorting.direction') || 'desc';
+      const sortingKey = this.preferences.get('shared.sorting.key') || 'modifiedAt';
+      const sortingDirection = this.preferences.get('shared.sorting.direction') || 'desc';
 
       const nodes = await this.contentApi
         .findSharedLinks({
@@ -402,19 +345,17 @@ export class PreviewComponent extends PageComponent
         })
         .toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortingKey, sortingDirection);
 
-      return entries.map(obj => obj.nodeId);
+      return entries.map((obj) => obj.nodeId);
     }
 
     if (source === 'recent-files') {
       const person = await this.contentApi.getPerson('-me-').toPromise();
       const username = person.entry.id;
-      const sortingKey =
-        this.preferences.get('recent-files.sorting.key') || 'modifiedAt';
-      const sortingDirection =
-        this.preferences.get('recent-files.sorting.direction') || 'desc';
+      const sortingKey = this.preferences.get('recent-files.sorting.key') || 'modifiedAt';
+      const sortingDirection = this.preferences.get('recent-files.sorting.direction') || 'desc';
 
       const query: SearchRequest = {
         query: {
@@ -440,10 +381,10 @@ export class PreviewComponent extends PageComponent
       };
       const nodes = await this.contentApi.search(query).toPromise();
 
-      const entries = nodes.list.entries.map(obj => obj.entry);
+      const entries = nodes.list.entries.map((obj) => obj.entry);
       this.sort(entries, sortingKey, sortingDirection);
 
-      return entries.map(obj => obj.id);
+      return entries.map((obj) => obj.id);
     }
 
     return [];
@@ -459,23 +400,19 @@ export class PreviewComponent extends PageComponent
     items.sort((a: any, b: any) => {
       let left = ObjectUtils.getValue(a, key);
       if (left) {
-        left =
-          left instanceof Date ? left.valueOf().toString() : left.toString();
+        left = left instanceof Date ? left.valueOf().toString() : left.toString();
       } else {
         left = '';
       }
 
       let right = ObjectUtils.getValue(b, key);
       if (right) {
-        right =
-          right instanceof Date ? right.valueOf().toString() : right.toString();
+        right = right instanceof Date ? right.valueOf().toString() : right.toString();
       } else {
         right = '';
       }
 
-      return direction === 'asc'
-        ? left.localeCompare(right, undefined, options)
-        : right.localeCompare(left, undefined, options);
+      return direction === 'asc' ? left.localeCompare(right, undefined, options) : right.localeCompare(left, undefined, options);
     });
   }
 
@@ -493,8 +430,7 @@ export class PreviewComponent extends PageComponent
 
   private getNavigationCommands(url: string): any[] {
     const urlTree: UrlTree = this.router.parseUrl(url);
-    const urlSegmentGroup: UrlSegmentGroup =
-      urlTree.root.children[PRIMARY_OUTLET];
+    const urlSegmentGroup: UrlSegmentGroup = urlTree.root.children[PRIMARY_OUTLET];
 
     if (!urlSegmentGroup) {
       return [url];
@@ -502,7 +438,7 @@ export class PreviewComponent extends PageComponent
 
     const urlSegments: UrlSegment[] = urlSegmentGroup.segments;
 
-    return urlSegments.reduce(function(acc, item) {
+    return urlSegments.reduce(function (acc, item) {
       acc.push(item.path, item.parameters);
       return acc;
     }, []);
@@ -519,8 +455,6 @@ export class PreviewComponent extends PageComponent
   }
 
   private isChild(list: DOMTokenList): boolean {
-    return Array.from(list).some((className: string) =>
-      this.containersSkipNavigation.includes(className)
-    );
+    return Array.from(list).some((className: string) => this.containersSkipNavigation.includes(className));
   }
 }

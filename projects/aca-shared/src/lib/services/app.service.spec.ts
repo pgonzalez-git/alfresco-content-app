@@ -29,12 +29,14 @@ import { AuthenticationService, AppConfigService } from '@alfresco/adf-core';
 import { Subject } from 'rxjs';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRouteReuseStrategy } from '../routing/app.routes.strategy';
+import { SearchQueryBuilderService } from '@alfresco/adf-content-services';
 
 describe('AppService', () => {
   let service: AppService;
   let auth: AuthenticationService;
   let routeReuse: AppRouteReuseStrategy;
   let appConfig: AppConfigService;
+  let searchQueryBuilderService: SearchQueryBuilderService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -52,22 +54,24 @@ describe('AppService', () => {
       ]
     });
 
-    routeReuse = TestBed.get(AppRouteReuseStrategy);
-    auth = TestBed.get(AuthenticationService);
-    appConfig = TestBed.get(AppConfigService);
+    routeReuse = TestBed.inject(AppRouteReuseStrategy);
+    auth = TestBed.inject(AuthenticationService);
+    appConfig = TestBed.inject(AppConfigService);
+    searchQueryBuilderService = TestBed.inject(SearchQueryBuilderService);
+
     spyOn(routeReuse, 'resetCache').and.stub();
 
-    service = new AppService(auth, appConfig, routeReuse);
+    service = new AppService(auth, appConfig, searchQueryBuilderService, routeReuse);
   });
 
-  it('should be ready if [withCredentials] mode is used', done => {
+  it('should be ready if [withCredentials] mode is used', (done) => {
     appConfig.config = {
       auth: {
         withCredentials: true
       }
     };
 
-    const instance = new AppService(auth, appConfig, routeReuse);
+    const instance = new AppService(auth, appConfig, searchQueryBuilderService, routeReuse);
     expect(instance.withCredentials).toBeTruthy();
 
     instance.ready$.subscribe(() => {
@@ -87,7 +91,7 @@ describe('AppService', () => {
 
   it('should be ready after login', async () => {
     let isReady = false;
-    service.ready$.subscribe(value => {
+    service.ready$.subscribe((value) => {
       isReady = value;
     });
     auth.onLogin.next();

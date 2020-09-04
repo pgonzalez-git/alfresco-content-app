@@ -23,19 +23,14 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BrowsingPage, LoginPage } from '../../pages/pages';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { EXTENSIBILITY_CONFIGS } from '../../configs';
-import { Utils } from '../../utilities/utils';
-import { InfoDrawer } from '../../components/info-drawer/info-drawer';
-import { MetadataCard } from '../../components/metadata-card/metadata-card';
+import { BrowsingPage, LoginPage, RepoClient, EXTENSIBILITY_CONFIGS, Utils, InfoDrawer, MetadataCard } from '@alfresco/aca-testing-shared';
 
 describe('Extensions - Metadata presets', () => {
   const username = `user-${Utils.random()}`;
 
   const file = `file-${Utils.random()}.png`;
 
-  let fileId;
+  let fileId: string;
 
   const properties_tab = {
     title: 'Properties',
@@ -68,7 +63,7 @@ describe('Extensions - Metadata presets', () => {
   const loginPage = new LoginPage();
   const page = new BrowsingPage();
 
-  beforeAll(async done => {
+  beforeAll(async (done) => {
     await apis.admin.people.createUser({ username });
     fileId = (await apis.user.nodes.createImage(file)).entry.id;
 
@@ -79,7 +74,7 @@ describe('Extensions - Metadata presets', () => {
     done();
   });
 
-  beforeEach(async done => {
+  beforeEach(async (done) => {
     await page.refresh();
 
     await page.dataTable.selectItem(file);
@@ -93,7 +88,7 @@ describe('Extensions - Metadata presets', () => {
     done();
   });
 
-  afterAll(async done => {
+  afterAll(async (done) => {
     await apis.user.nodes.deleteNodeById(fileId);
     done();
   });

@@ -49,10 +49,7 @@ import { map } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ContentApiService {
-  constructor(
-    private api: AlfrescoApiService,
-    private preferences: UserPreferencesService
-  ) {}
+  constructor(private api: AlfrescoApiService, private preferences: UserPreferencesService) {}
 
   /**
    * Moves a node to the trashcan.
@@ -60,10 +57,7 @@ export class ContentApiService {
    * @param options Optional parameters supported by JS-API
    * @returns Empty result that notifies when the deletion is complete
    */
-  deleteNode(
-    nodeId: string,
-    options: { permanent?: boolean } = {}
-  ): Observable<void> {
+  deleteNode(nodeId: string, options: { permanent?: boolean } = {}): Observable<void> {
     return from(this.api.nodesApi.deleteNode(nodeId, options));
   }
 
@@ -75,7 +69,7 @@ export class ContentApiService {
    */
   getNode(nodeId: string, options: any = {}): Observable<MinimalNodeEntity> {
     const defaults = {
-      include: ['path', 'properties', 'allowableOperations', 'permissions']
+      include: ['path', 'properties', 'allowableOperations', 'permissions', 'definition']
     };
     const queryOptions = Object.assign(defaults, options);
 
@@ -84,7 +78,7 @@ export class ContentApiService {
 
   getNodeInfo(nodeId: string, options?: any): Observable<Node> {
     const defaults = {
-      include: ['isFavorite', 'allowableOperations', 'path']
+      include: ['isFavorite', 'allowableOperations', 'path', 'definition']
     };
     const queryOptions = Object.assign(defaults, options || {});
 
@@ -101,13 +95,7 @@ export class ContentApiService {
     const defaults = {
       maxItems: this.preferences.paginationSize,
       skipCount: 0,
-      include: [
-        'isLocked',
-        'path',
-        'properties',
-        'allowableOperations',
-        'permissions'
-      ]
+      include: ['isLocked', 'path', 'properties', 'allowableOperations', 'permissions']
     };
     const queryOptions = Object.assign(defaults, options);
 
@@ -140,10 +128,7 @@ export class ContentApiService {
    * @param personId ID of the target user
    * @returns User information
    */
-  getPerson(
-    personId: string,
-    options?: { fields?: Array<string> }
-  ): Observable<PersonEntry> {
+  getPerson(personId: string, options?: { fields?: Array<string> }): Observable<PersonEntry> {
     return from(this.api.peopleApi.getPerson(personId, options));
   }
 
@@ -154,15 +139,8 @@ export class ContentApiService {
    * @param targetParentId The id of the folder-node where the node have to be copied to
    * @param name The new name for the copy that would be added on the destination folder
    */
-  copyNode(
-    nodeId: string,
-    targetParentId: string,
-    name?: string,
-    opts?: { include?: Array<string>; fields?: Array<string> }
-  ): Observable<NodeEntry> {
-    return from(
-      this.api.nodesApi.copyNode(nodeId, { targetParentId, name }, opts)
-    );
+  copyNode(nodeId: string, targetParentId: string, name?: string, opts?: { include?: Array<string>; fields?: Array<string> }): Observable<NodeEntry> {
+    return from(this.api.nodesApi.copyNode(nodeId, { targetParentId, name }, opts));
   }
 
   /**
@@ -170,9 +148,7 @@ export class ContentApiService {
    * @returns ProductVersionModel containing product details
    */
   getRepositoryInformation(): Observable<DiscoveryEntry> {
-    return from(
-      this.api.getInstance().discovery.discoveryApi.getRepositoryInformation()
-    );
+    return from(this.api.getInstance().discovery.discoveryApi.getRepositoryInformation());
   }
 
   getFavorites(
@@ -187,10 +163,7 @@ export class ContentApiService {
     return from(this.api.favoritesApi.getFavorites(personId, opts));
   }
 
-  getFavoriteLibraries(
-    personId: string = '-me-',
-    opts?: any
-  ): Observable<FavoritePaging> {
+  getFavoriteLibraries(personId: string = '-me-', opts?: any): Observable<FavoritePaging> {
     return this.getFavorites(personId, {
       ...opts,
       where: '(EXISTS(target/site))'
@@ -227,6 +200,10 @@ export class ContentApiService {
     return this.api.contentApi.getContentUrl(nodeId, attachment);
   }
 
+  getVersionContentUrl(nodeId: string, versionId: string, attachment?: boolean): string {
+    return this.api.contentApi.getVersionContentUrl(nodeId, versionId, attachment);
+  }
+
   deleteSite(siteId?: string, opts?: { permanent?: boolean }): Observable<any> {
     return from(this.api.sitesApi.deleteSite(siteId, opts));
   }
@@ -246,10 +223,7 @@ export class ContentApiService {
     return from(this.api.sitesApi.createSite(siteBody, opts));
   }
 
-  getSite(
-    siteId?: string,
-    opts?: { relations?: Array<string>; fields?: Array<string> }
-  ): Observable<SiteEntry> {
+  getSite(siteId?: string, opts?: { relations?: Array<string>; fields?: Array<string> }): Observable<SiteEntry> {
     return from(this.api.sitesApi.getSite(siteId, opts));
   }
 
@@ -258,7 +232,7 @@ export class ContentApiService {
   }
 
   addFavorite(nodes: Array<MinimalNodeEntity>): Observable<FavoriteEntry> {
-    const payload: FavoriteBody[] = nodes.map(node => {
+    const payload: FavoriteBody[] = nodes.map((node) => {
       const { isFolder, nodeId, id } = node.entry as any;
       const siteId = node.entry['guid'];
       const type = siteId ? 'site' : isFolder ? 'folder' : 'file';

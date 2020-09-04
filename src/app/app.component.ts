@@ -33,10 +33,10 @@ import {
   SharedLinksApiService,
   StorageService
 } from '@alfresco/adf-core';
+import { GroupService } from '@alfresco/adf-content-services';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, ActivationEnd } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AppExtensionService } from './extensions/extension.service';
 import {
   AppStore,
   AppState,
@@ -48,8 +48,8 @@ import {
   SetRepositoryInfoAction
 } from '@alfresco/aca-shared/store';
 import { filter, takeUntil } from 'rxjs/operators';
-import { AppService, ContentApiService } from '@alfresco/aca-shared';
-import { DiscoveryEntry, GroupsApi, Group } from '@alfresco/js-api';
+import { RouterExtensionService, AppService, ContentApiService } from '@alfresco/aca-shared';
+import { DiscoveryEntry, GroupEntry, Group } from '@alfresco/js-api';
 import { Subject } from 'rxjs';
 import { INITIAL_APP_STATE } from './store/initial-state';
 
@@ -71,45 +71,38 @@ export class AppComponent implements OnInit, OnDestroy {
     private alfrescoApiService: AlfrescoApiService,
     private authenticationService: AuthenticationService,
     private uploadService: UploadService,
-    private extensions: AppExtensionService,
+    private routerExtensionService: RouterExtensionService,
     private contentApi: ContentApiService,
     private appService: AppService,
     private sharedLinksApiService: SharedLinksApiService,
-    private storage: StorageService
+    private storage: StorageService,
+    private groupService: GroupService
   ) {}
 
   ngOnInit() {
-    this.alfrescoApiService
-      .getInstance()
-      .on('error', (error: { status: number }) => {
-        if (error.status === 401) {
-          if (!this.authenticationService.isLoggedIn()) {
-            this.store.dispatch(new CloseModalDialogsAction());
+    this.alfrescoApiService.getInstance().on('error', (error: { status: number }) => {
+      if (error.status === 401) {
+        if (!this.authenticationService.isLoggedIn()) {
+          this.store.dispatch(new CloseModalDialogsAction());
 
-            let redirectUrl = this.route.snapshot.queryParams['redirectUrl'];
-            if (!redirectUrl) {
-              redirectUrl = this.router.url;
-            }
-
-            this.router.navigate(['/login'], {
-              queryParams: { redirectUrl: redirectUrl }
-            });
+          let redirectUrl = this.route.snapshot.queryParams['redirectUrl'];
+          if (!redirectUrl) {
+            redirectUrl = this.router.url;
           }
+
+          this.router.navigate(['/login'], {
+            queryParams: { redirectUrl: redirectUrl }
+          });
         }
-      });
+      }
+    });
 
     this.loadAppSettings();
 
     const { router, pageTitle } = this;
 
     this.router.events
-      .pipe(
-        filter(
-          event =>
-            event instanceof ActivationEnd &&
-            event.snapshot.children.length === 0
-        )
-      )
+      .pipe(filter((event) => event instanceof ActivationEnd && event.snapshot.children.length === 0))
       .subscribe((event: ActivationEnd) => {
         const snapshot: any = event.snapshot || {};
         const data: any = snapshot.data || {};
@@ -119,26 +112,20 @@ export class AppComponent implements OnInit, OnDestroy {
         this.store.dispatch(new SetCurrentUrlAction(router.url));
       });
 
-    this.router.config.unshift(...this.extensions.getApplicationRoutes());
+    this.routerExtensionService.mapExtensionRoutes();
 
-    this.uploadService.fileUploadError.subscribe(error =>
-      this.onFileUploadedError(error)
-    );
+    this.uploadService.fileUploadError.subscribe((error) => this.onFileUploadedError(error));
 
-    this.sharedLinksApiService.error
-      .pipe(takeUntil(this.onDestroy$))
-      .subscribe((err: { message: string }) => {
-        this.store.dispatch(new SnackbarErrorAction(err.message));
-      });
+    this.sharedLinksApiService.error.pipe(takeUntil(this.onDestroy$)).subscribe((err: { message: string }) => {
+      this.store.dispatch(new SnackbarErrorAction(err.message));
+    });
 
-    this.appService.ready$
-      .pipe(takeUntil(this.onDestroy$))
-      .subscribe(isReady => {
-        if (isReady) {
-          this.loadRepositoryStatus();
-          this.loadUserProfile();
-        }
-      });
+    this.appService.ready$.pipe(takeUntil(this.onDestroy$)).subscribe((isReady) => {
+      if (isReady) {
+        this.loadRepositoryStatus();
+        this.loadUserProfile();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -147,28 +134,22 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private loadRepositoryStatus() {
-    this.contentApi
-      .getRepositoryInformation()
-      .subscribe((response: DiscoveryEntry) => {
-        this.store.dispatch(
-          new SetRepositoryInfoAction(response.entry.repository)
-        );
-      });
+    this.contentApi.getRepositoryInformation().subscribe((response: DiscoveryEntry) => {
+      this.store.dispatch(new SetRepositoryInfoAction(response.entry.repository));
+    });
   }
 
   private async loadUserProfile() {
-    const groupsApi = new GroupsApi(this.alfrescoApiService.getInstance());
-    const paging = await groupsApi.listGroupMembershipsForPerson('-me-');
+    const groupsEntries: GroupEntry[] = await this.groupService.listAllGroupMembershipsForPerson('-me-', { maxItems: 250 });
+
     const groups: Group[] = [];
 
-    if (paging && paging.list && paging.list.entries) {
-      groups.push(...paging.list.entries.map(obj => obj.entry));
+    if (groupsEntries) {
+      groups.push(...groupsEntries.map((obj) => obj.entry));
     }
 
-    this.contentApi.getPerson('-me-').subscribe(person => {
-      this.store.dispatch(
-        new SetUserProfileAction({ person: person.entry, groups })
-      );
+    this.contentApi.getPerson('-me-').subscribe((person) => {
+      this.store.dispatch(new SetUserProfileAction({ person: person.entry, groups }));
     });
   }
 

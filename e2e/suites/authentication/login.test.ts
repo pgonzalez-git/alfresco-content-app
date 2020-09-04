@@ -24,12 +24,7 @@
  */
 
 import { browser } from 'protractor';
-
-import { APP_ROUTES } from '../../configs';
-import { LoginPage, BrowsingPage } from '../../pages/pages';
-import { Utils } from '../../utilities/utils';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { navigate } from '../../utilities/browser-utils';
+import { APP_ROUTES, LoginPage, BrowsingPage, Utils, RepoClient, navigate } from '@alfresco/aca-testing-shared';
 
 describe('Login', () => {
   const peopleApi = new RepoClient().people;
@@ -47,7 +42,9 @@ describe('Login', () => {
 
   const johnDoe = {
     username: `user-${Utils.random()}`,
-    get password() { return this.username; },
+    get password() {
+      return this.username;
+    },
     firstName: 'John',
     lastName: 'Doe'
   };

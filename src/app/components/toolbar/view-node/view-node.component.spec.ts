@@ -29,8 +29,9 @@ import { Store } from '@ngrx/store';
 import { CoreModule } from '@alfresco/adf-core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 
-describe('ToggleFavoriteComponent', () => {
+describe('ViewNodeComponent', () => {
   let component: ViewNodeComponent;
   let fixture;
   const mockRouter = {
@@ -51,7 +52,7 @@ describe('ToggleFavoriteComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [CoreModule.forRoot()],
+      imports: [TranslateModule.forRoot(), CoreModule.forRoot()],
       declarations: [ViewNodeComponent],
       providers: [
         { provide: Store, useValue: mockStore },
@@ -74,9 +75,7 @@ describe('ToggleFavoriteComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.mat-menu-item')).not.toBe(
-      null
-    );
+    expect(fixture.nativeElement.querySelector('.mat-menu-item')).not.toBe(null);
   });
 
   it('should render as a icon button', () => {
@@ -86,9 +85,7 @@ describe('ToggleFavoriteComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.mat-icon-button')).not.toBe(
-      null
-    );
+    expect(fixture.nativeElement.querySelector('.mat-icon-button')).not.toBe(null);
   });
 
   it('should call ViewNodeAction onClick event', () => {

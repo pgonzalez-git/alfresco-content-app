@@ -23,16 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  Output,
-  ViewEncapsulation,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -64,7 +55,7 @@ export class SearchInputControlComponent implements OnDestroy {
   @Output()
   searchChange: EventEmitter<string> = new EventEmitter();
 
-  @ViewChild('searchInput')
+  @ViewChild('searchInput', { static: true })
   searchInput: ElementRef;
 
   searchTerm = '';

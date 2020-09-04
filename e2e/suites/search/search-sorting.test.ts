@@ -23,10 +23,7 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LoginPage, SearchResultsPage } from '../../pages/pages';
-import { RepoClient } from '../../utilities/repo-client/repo-client';
-import { Utils } from '../../utilities/utils';
-import { FILES } from '../../configs';
+import { LoginPage, SearchResultsPage, RepoClient, Utils, FILES } from '@alfresco/aca-testing-shared';
 
 describe('Search sorting', () => {
   const random = Utils.random();
@@ -98,7 +95,7 @@ describe('Search sorting', () => {
 
     await page.sortingPicker.clickSortByDropdown();
 
-    const expectedOptions = [ 'Relevance', 'Filename', 'Title', 'Modified date', 'Modifier', 'Created date', 'Size', 'Type' ];
+    const expectedOptions = ['Relevance', 'Filename', 'Title', 'Modified date', 'Modifier', 'Created date', 'Size', 'Type'];
     expect(await page.sortingPicker.getSortByOptionsList()).toEqual(expectedOptions, 'Incorrect sort options list');
   });
 

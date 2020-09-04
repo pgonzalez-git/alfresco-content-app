@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/Alfresco/alfresco-content-app/blob/development/extension.schema.json",
+  "$id": "https://github.com/Alfresco/alfresco-content-app/blob/develop/extension.schema.json",
   "title": "ACA Extension Schema",
   "description": "Provides a validation schema for ACA extensions",
 
@@ -562,6 +562,10 @@
           "description": "Property key",
           "type": "string"
         },
+        "sortingKey": {
+          "description": "Property key for server sorting",
+          "type": "string"
+        },
         "type": {
           "description": "Column type",
           "type": "string",
@@ -670,7 +674,7 @@
   },
 
   "type": "object",
-  "required": ["$id", "$name", "$version", "$vendor", "$license", "$runtime"],
+  "required": ["$id", "$name", "$version", "$vendor", "$license"],
   "properties": {
     "$id": {
       "description": "Unique identifier",
@@ -693,7 +697,7 @@
       "type": "string"
     },
     "$runtime": {
-      "description": "Minimal extension runtime supported by extension",
+      "description": "(deprecated) Minimal extension runtime supported by extension",
       "type": "string"
     },
     "$description": {
@@ -803,9 +807,20 @@
         },
         "sidebar": {
           "description": "Sidebar extensions",
-          "type": "array",
-          "items": { "$ref": "#/definitions/sidebarTabRef" },
-          "minItems": 1
+          "type": "object",
+          "properties": {
+            "toolbar": {
+              "description": "Toolbar entries",
+              "type": "array",
+              "items": { "$ref": "#/definitions/contentActionRef" }
+            },
+            "tabs": {
+              "description": "Tabs entries",
+              "type": "array",
+              "items": { "$ref": "#/definitions/sidebarTabRef" },
+              "minItems": 1
+            }
+          }
         },
         "toolbar": {
           "description": "Toolbar entries",

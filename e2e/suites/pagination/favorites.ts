@@ -23,15 +23,13 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BrowsingPage } from '../../pages/pages';
-import { Utils } from '../../utilities/utils';
+import { BrowsingPage, Utils } from '@alfresco/aca-testing-shared';
 
 export function favoritesTests() {
   const page = new BrowsingPage();
   const { dataTable, pagination } = page;
 
   describe('Pagination controls : ', () => {
-
     beforeAll(async () => {
       await page.clickFavoritesAndWait();
     });
@@ -58,7 +56,7 @@ export function favoritesTests() {
     });
 
     it('current page menu items - [C280115]', async () => {
-      await pagination.openMaxItemsMenu()
+      await pagination.openMaxItemsMenu();
       await pagination.menu.clickMenuItem('25');
       expect(await pagination.getMaxItems()).toContain('25');
       expect(await pagination.getTotalPages()).toContain('of 5');

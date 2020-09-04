@@ -25,13 +25,14 @@
 
 import { NgModule } from '@angular/core';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { TranslatePipeMock } from './translate-pipe.directive';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
   TranslationService,
   TranslationMock,
   AuthenticationService,
   UserPreferencesService,
+  DiscoveryApiService,
+  EcmProductVersionModel,
   AppConfigService,
   StorageService,
   AlfrescoApiService,
@@ -45,17 +46,16 @@ import {
   PipeModule
 } from '@alfresco/adf-core';
 import { HttpClientModule } from '@angular/common/http';
-import { TranslateServiceMock } from './translation.service';
 import { StoreModule } from '@ngrx/store';
 import { appReducer } from '../store/reducers/app.reducer';
 import { RouterTestingModule } from '@angular/router/testing';
 import { EffectsModule } from '@ngrx/effects';
-import {
-  CustomResourcesService,
-  DocumentListService
-} from '@alfresco/adf-content-services';
+import { CustomResourcesService, DocumentListService } from '@alfresco/adf-content-services';
 import { MaterialModule } from '../material.module';
 import { INITIAL_STATE } from '../store/initial-state';
+import { TranslatePipeMock } from './translate-pipe.directive';
+import { TranslateServiceMock } from './translation.service';
+import { Observable, of } from 'rxjs';
 
 @NgModule({
   imports: [
@@ -63,7 +63,16 @@ import { INITIAL_STATE } from '../store/initial-state';
     HttpClientModule,
     RouterTestingModule,
     MaterialModule,
-    StoreModule.forRoot({ app: appReducer }, { initialState: INITIAL_STATE }),
+    StoreModule.forRoot(
+      { app: appReducer },
+      {
+        initialState: INITIAL_STATE,
+        runtimeChecks: {
+          strictStateImmutability: false,
+          strictActionImmutability: false
+        }
+      }
+    ),
     EffectsModule.forRoot([]),
     PipeModule
   ],
@@ -74,6 +83,14 @@ import { INITIAL_STATE } from '../store/initial-state';
     { provide: TranslationService, useClass: TranslationMock },
     { provide: TranslateService, useClass: TranslateServiceMock },
     { provide: TranslatePipe, useClass: TranslatePipeMock },
+    {
+      provide: DiscoveryApiService,
+      useValue: {
+        getEcmProductInfo(): Observable<EcmProductVersionModel> {
+          return of(new EcmProductVersionModel({ version: '10.0.0' }));
+        }
+      }
+    },
     {
       provide: AuthenticationService,
       useValue: {

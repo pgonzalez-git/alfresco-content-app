@@ -26,7 +26,7 @@
 import { NgModule } from '@angular/core';
 import { StoreModule } from '@ngrx/store';
 import { appReducer } from './reducers/app.reducer';
-import { StoreRouterConnectingModule } from '@ngrx/router-store';
+import { StoreRouterConnectingModule, DefaultRouterStateSerializer } from '@ngrx/router-store';
 import { EffectsModule } from '@ngrx/effects';
 import { environment } from '../../environments/environment';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -47,8 +47,20 @@ import { INITIAL_STATE } from './initial-state';
 
 @NgModule({
   imports: [
-    StoreModule.forRoot({ app: appReducer }, { initialState: INITIAL_STATE }),
-    StoreRouterConnectingModule.forRoot({ stateKey: 'router' }),
+    StoreModule.forRoot(
+      { app: appReducer },
+      {
+        initialState: INITIAL_STATE,
+        runtimeChecks: {
+          strictStateImmutability: false,
+          strictActionImmutability: false
+        }
+      }
+    ),
+    StoreRouterConnectingModule.forRoot({
+      serializer: DefaultRouterStateSerializer,
+      stateKey: 'router'
+    }),
     SharedStoreModule,
     EffectsModule.forRoot([
       AppEffects,
@@ -62,9 +74,7 @@ import { INITIAL_STATE } from './initial-state';
       TemplateEffects,
       ContextMenuEffects
     ]),
-    !environment.production
-      ? StoreDevtoolsModule.instrument({ maxAge: 25 })
-      : []
+    !environment.production ? StoreDevtoolsModule.instrument({ maxAge: 25 }) : []
   ]
 })
 export class AppStoreModule {}

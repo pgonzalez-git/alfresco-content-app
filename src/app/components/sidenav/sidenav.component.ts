@@ -23,24 +23,16 @@
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  Component,
-  ContentChild,
-  Input,
-  TemplateRef,
-  OnInit,
-  ViewEncapsulation,
-  OnDestroy
-} from '@angular/core';
+import { Component, ContentChild, Input, TemplateRef, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { CollapsedTemplateDirective } from './directives/collapsed-template.directive';
 import { ExpandedTemplateDirective } from './directives/expanded-template.directive';
-import { AppExtensionService } from '../../extensions/extension.service';
 import { NavBarGroupRef } from '@alfresco/adf-extensions';
 import { AuthenticationService } from '@alfresco/adf-core';
 import { Store } from '@ngrx/store';
 import { AppStore, getSideNavState } from '@alfresco/aca-shared/store';
 import { Subject } from 'rxjs';
 import { takeUntil, distinctUntilChanged, debounceTime } from 'rxjs/operators';
+import { AppExtensionService } from '@alfresco/aca-shared';
 
 @Component({
   selector: 'app-sidenav',
@@ -50,35 +42,28 @@ import { takeUntil, distinctUntilChanged, debounceTime } from 'rxjs/operators';
   host: { class: 'app-sidenav' }
 })
 export class SidenavComponent implements OnInit, OnDestroy {
-  @Input() mode: 'collapsed' | 'expanded' = 'expanded';
+  @Input()
+  mode: 'collapsed' | 'expanded' = 'expanded';
 
   @ContentChild(ExpandedTemplateDirective, { read: TemplateRef })
   expandedTemplate;
 
-  @ContentChild(CollapsedTemplateDirective, { read: TemplateRef })
+  @ContentChild(CollapsedTemplateDirective, {
+    read: TemplateRef
+  })
   collapsedTemplate;
 
   groups: Array<NavBarGroupRef> = [];
   private onDestroy$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(
-    private store: Store<AppStore>,
-    private extensions: AppExtensionService,
-    private authService: AuthenticationService
-  ) {}
+  constructor(private store: Store<AppStore>, private extensions: AppExtensionService, private authService: AuthenticationService) {}
 
   ngOnInit() {
     this.store
       .select(getSideNavState)
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.onDestroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.onDestroy$))
       .subscribe(() => {
-        this.groups = this.extensions.getApplicationNavigation(
-          this.extensions.navbar
-        );
+        this.groups = this.extensions.getApplicationNavigation(this.extensions.navbar);
       });
   }
 
